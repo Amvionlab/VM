@@ -27,7 +27,9 @@ const Form = () => {
   const [formData, setFormData] = useState({
     username: "",
     employee_id: "",
-    password: ''
+    password: '',
+    usertype: "",
+    ttype: ""
   });
   const { user } = useContext(UserContext);
   const [ticketsPerPage, setTicketsPerPage] = useState(10);
@@ -37,6 +39,8 @@ const Form = () => {
   const [users, setUsers] = useState([]);
   const [filteredUsers, setFilteredUsers] = useState([]);
   const [filters, setFilters] = useState({});
+  const [departments, setDepartments] = useState([]);
+  const [showDepartmentDropdown, setShowDepartmentDropdown] = useState(false);
   const [showFilter, setShowFilter] = useState({
     id: false,
     name: false,
@@ -102,12 +106,33 @@ console.log("emp",employee)
 
   const navigate = useNavigate();
 
+  useEffect(() => {
+    if (showDepartmentDropdown) {
+      fetch(`${baseURL}/backend/fetchTicket_type.php`) // Replace with your actual API endpoint
+        .then((response) => response.json())
+        .then((data) => {
+          const activeDepartments = data.filter((item) => item.is_active); // Filter active departments
+          setDepartments(activeDepartments);
+        })
+        .catch((error) => console.error("Error fetching departments:", error));
+    }
+  }, [showDepartmentDropdown]);
+
+  // Handle input changes
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData({
-      ...formData,
+    setFormData((prev) => ({
+      ...prev,
       [name]: value,
-    });
+    }));
+
+    // Show "Department" dropdown if "Support" or "Manager" is selected
+    if (name === "usertype" && (value === "Support" || value === "Manager")) {
+      setShowDepartmentDropdown(true);
+    } else if (name === "usertype") {
+      setShowDepartmentDropdown(false);
+      setFormData((prev) => ({ ...prev, ttype: "" })); // Reset department if not required
+    }
   };
 
   const handleRowsPerPageChange = (e) => {
@@ -319,31 +344,61 @@ console.log("emp",employee)
                   />
                 </div>
 
-                <div className="flex items-center mb-2 mr-4">
-                  <label className="text-sm font-semibold text-prime mr-2 w-32">
-                    User Type<span className="text-red-600 text-md font-bold">*</span>
-                  </label>
-                  <select
-                    name="usertype"
-                    value={formData.usertype}
-                    onChange={handleChange}
-                    className="selectbox flex-grow text-xs bg-box border p-3 rounded-md outline-none focus:border-bgGray focus:ring-bgGray focus:shadow-prime focus:shadow-sm"
-                  >
-                    <option value="" className="custom-option">
-                      Select User Type
-                    </option>
-                    {access.map((access) => (
-                      <option
-                        key={access.id}
-                        value={access.id}
-                        className="custom-option"
-                        required
-                      >
-                        {access.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
+                <div>
+      {/* User Type Dropdown */}
+      <div className="flex items-center mb-2 mr-4">
+        <label className="text-sm font-semibold text-prime mr-2 w-32">
+          User Type<span className="text-red-600 text-md font-bold">*</span>
+        </label>
+        <select
+          name="usertype"
+          value={formData.usertype}
+          onChange={handleChange}
+          className="selectbox flex-grow text-xs bg-box border p-3 rounded-md outline-none focus:border-bgGray focus:ring-bgGray focus:shadow-prime focus:shadow-sm"
+        >
+          <option value="" className="custom-option">
+            Select User Type
+          </option>
+          {access.map((access) => (
+            <option
+              key={access.id}
+              value={access.name} // Ensure this matches "Support" or "Manager"
+              className="custom-option"
+            >
+              {access.name}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      {/* Department Dropdown (conditionally rendered) */}
+      {showDepartmentDropdown && (
+        <div className="flex items-center mb-2 mr-4">
+          <label className="text-sm font-semibold text-prime mr-2 w-32">
+            Department<span className="text-red-600 text-md font-bold">*</span>
+          </label>
+          <select
+            name="ttype"
+            value={formData.ttype}
+            onChange={handleChange}
+            className="selectbox flex-grow text-xs bg-box border p-3 rounded-md outline-none focus:border-bgGray focus:ring-bgGray focus:shadow-prime focus:shadow-sm"
+          >
+            <option value="" className="custom-option">
+              Select Department
+            </option>
+            {departments.map((department) => (
+              <option
+                key={department.id}
+                value={department.id}
+                className="custom-option"
+              >
+                {department.type}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
+    </div>
               </div>
 
               <div className="flex justify-center">
