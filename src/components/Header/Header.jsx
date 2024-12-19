@@ -140,7 +140,7 @@ function Header() {
     <header className="fixed bg-box top-0 right-0 h-[7vh] w-full flex justify-between items-center z-40">
       <div className="relative flex justify-between items-center w-full pr-4 p-2 text-sm gap-5 z-50">
         <div className="flex justify-start items-center text-base gap-5">
-          <h3 className="ml-52 font-bold text-flo font-sui capitalize">Hi {user.firstname}, Welcome to SAMPAT TMS</h3>
+          <h3 className="ml-52 font-bold text-flo font-raleway capitalize">Hi {user.firstname}, Welcome to SAMPAT TMS</h3>
         </div>
         {/* <p className="font-bold text-xs justify-center text-prime">© 2024, Amvion Labs Pvt. Ltd. All Rights Reserved.</p> */}
 
