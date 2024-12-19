@@ -168,8 +168,8 @@ const Form = () => {
   };
 
   return (
-    <div className="bg-box text-xs mx-auto sm:overflow-y-scroll lg::overflow-y-hidden h-auto ticket-scroll ">
-      <div className="max-w-full mt-1 ml-1 bg-box p-3 pt-4 h-[95%]">
+    <div className="bg-second p-0.5 text-xs mx-auto sm:overflow-y-scroll lg::overflow-y-hidden h-auto ticket-scroll ">
+      <div className="max-w-full bg-box p-3 h-[95%]">
         
         <form onSubmit={handleSubmit} className="space-y-4 text-label">
           <div className="grid grid-cols-no ml-0 overflow-x-hidden md:grid-cols-2 gap-x-10 md:ml-10 md:pr-10 mb-0 ">

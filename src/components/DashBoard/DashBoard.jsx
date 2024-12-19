@@ -269,6 +269,7 @@ const App = () => {
   };
 
   return (
+    <div className="bg-second p-0.5 h-full">
     <div className="bg-box h-full">
       <div className="flex justify-between items-center">
         <div className="header-left">
@@ -382,6 +383,7 @@ const App = () => {
           onCancel={handleCancelMove}
         />
       )}
+    </div>
     </div>
   );
 };
