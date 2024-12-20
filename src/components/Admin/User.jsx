@@ -27,20 +27,20 @@ const Form = () => {
   const [formData, setFormData] = useState({
     username: "",
     employee_id: "",
-    password: '',
+    password: "",
     department: "",
-    usertype: ""
+    usertype: "",
   });
   const { user } = useContext(UserContext);
   const [ticketsPerPage, setTicketsPerPage] = useState(10);
   const [currentPage, setCurrentPage] = useState(0);
+  const [departments, setDepartments] = useState([]);
+  const [showDepartmentDropdown, setShowDepartmentDropdown] = useState(false);
   let i = 1;
 
   const [users, setUsers] = useState([]);
   const [filteredUsers, setFilteredUsers] = useState([]);
   const [filters, setFilters] = useState({});
-  const [departments, setDepartments] = useState([]); // For departments
-  const [showDepartment, setShowDepartment] = useState(false);
   const [showFilter, setShowFilter] = useState({
     id: false,
     name: false,
@@ -69,65 +69,83 @@ const Form = () => {
   }, []);
 
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchAccess = async () => {
       try {
-        // Fetching user types
-        const userTypeResponse = await fetch(`${baseURL}/backend/fetchAccess.php`);
-        if (!userTypeResponse.ok) {
-          throw new Error("Failed to fetch user types.");
-        }
-        const userTypes = await userTypeResponse.json();
-        setAccess(userTypes);
-
-        // Fetching departments
-        const departmentResponse = await fetch(`${baseURL}/backend/fetchTicket_type.php`);
-        if (!departmentResponse.ok) {
-          throw new Error("Failed to fetch departments.");
-        }
-        const departmentData = await departmentResponse.json();
-        setDepartments(departmentData);
-
-        // Fetching employee data
-        const employeeResponse = await fetch(`${baseURL}/backend/fetchEmployees.php`);
-        if (!employeeResponse.ok) {
-          throw new Error("Failed to fetch employees.");
-        }
-        const employeeData = await employeeResponse.json();
-        setEmployee(employeeData);
-
-        // Fetching users
-        const usersResponse = await fetch(`${baseURL}/backend/fetchUsers.php`);
-        if (!usersResponse.ok) {
-          throw new Error("Failed to fetch users.");
-        }
-        const usersData = await usersResponse.json();
-        setUsers(usersData);
-
+        const response = await fetch(`${baseURL}/backend/fetchAccess.php`);
+        const data = await response.json();
+        setAccess(data);
       } catch (error) {
-        console.error("Error fetching data:", error);
-        toast.error("Failed to fetch data. Please try again later.");
+        console.error("Error fetching access:", error);
       }
     };
 
-    fetchData();
-  }, []); // Empty dependency array means this effect runs only once on mount
+    const fetchEmployee = async () => {
+      try {
+        const response = await fetch(`${baseURL}/backend/fetchEmployees.php`);
+        const data = await response.json();
+        setEmployee(data);
+      } catch (error) {
+        console.error("Error fetching access:", error);
+      }
+    };
+console.log("emp",employee)
+    const fetchUsers = async () => {
+      try {
+        const response = await fetch(`${baseURL}/backend/fetchUsers.php`);
+        const data = await response.json();
+        setUsers(data);
+      } catch (error) {
+        console.error("Error fetching users:", error);
+      }
+    };
 
-  const navigate = useNavigate();
+    fetchAccess();
+    fetchUsers();
+    fetchEmployee();
+  }, []);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
 
-    // Show department dropdown only if usertype is "Support" or "Manager"
     if (name === "usertype") {
-      setShowDepartment(value === "support" || value === "manager");
+      handleUserTypeChange(value);
     }
   };
+
+  // Handle user type selection logic
+  const handleUserTypeChange = async (usertype) => {
+    if (usertype === "Manager" || usertype === "Support") {
+      setShowDepartmentDropdown(true);
+      await fetchDepartments();
+    } else {
+      setShowDepartmentDropdown(false);
+      setFormData((prev) => ({ ...prev, department: "" })); // Reset department
+    }
+  };
+
+  const navigate = useNavigate();
 
   const handleRowsPerPageChange = (e) => {
     const value = parseInt(e.target.value, 10);
     setTicketsPerPage(!isNaN(value) && value >= 1 ? value : 1);
     setCurrentPage(0);
+  };
+
+  const fetchDepartments = async () => {
+    try {
+      const response = await fetch(`${baseURL}/backend/fetchTicket_type.php`);
+      if (!response.ok) {
+        throw new Error("Failed to fetch departments");
+      }
+      const data = await response.json();
+      setDepartments(data);
+    } catch (error) {
+      console.error("Error fetching departments:", error);
+    }
   };
 
   const handlePageClick = ({ selected }) => {
@@ -136,33 +154,40 @@ const Form = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    document.body.classList.add("cursor-wait", "pointer-events-none");
-
+    document.body.classList.add('cursor-wait', 'pointer-events-none');
+    
+    // Create a new FormData object
     const form = new FormData();
     for (const key in formData) {
-      form.append(key, formData[key]);
+        // Append each form data key-value pair to the FormData object
+        form.append(key, formData[key]);
+    }
+
+    // Log the form values before submission
+    console.log("Form Values:");
+    for (const [key, value] of form.entries()) {
+        console.log(`${key}: ${value}`);
     }
 
     try {
-      const response = await fetch(`${baseURL}/backend/user_add.php`, {
-        method: "POST",
-        body: form,
-      });
-      const result = await response.json();
-
-      if (!response.ok) {
-        throw new Error(result.message || "Something went wrong");
-      }
-
-      toast.success("User added successfully");
-      window.location.reload();
+        const response = await fetch(`${baseURL}/backend/user_add.php`, {
+            method: "POST",
+            body: form,
+        });
+        const result = await response.json();
+        if (!response.ok) {
+            throw new Error(result.message || "Something went wrong");
+        }
+        toast.success("User added");
+        document.body.classList.remove('cursor-wait', 'pointer-events-none');
+        window.location.reload();
     } catch (error) {
-      console.error("Error submitting form:", error);
-      toast.error(`Error adding user: ${error.message}`);
-    } finally {
-      document.body.classList.remove("cursor-wait", "pointer-events-none");
+        console.error("Error submitting form:", error);
+        toast.error("Error adding user. " + error.message);
+        document.body.classList.remove('cursor-wait', 'pointer-events-none');
     }
-  };
+};
+
 
   const pageCount = Math.ceil(filteredUsers.length / ticketsPerPage);
 
@@ -272,114 +297,123 @@ const Form = () => {
   return (
     <div className="bg-second max-h-full h-full max-w-full text-xs mx-auto lg:overflow-y-hidden ticket-scroll">
       {showForm && (
-        <div className="max-w-full w-full mt-3 m-1 mb-1 p-2 bg-box rounded-lg font-mont">
-          <div className="ticket-table mt-2">
-            <form onSubmit={handleSubmit} className="space-y-4 text-label">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-10 ml-10 pr-10 mb-0">
-                <div className="text-lg font-bold text-prime mb-2 font-mont">
-                  User Details:
-                </div>
-              </div>
-
-              
-              
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-x-10 ml-10 pr-10 mb-0">
-
-              <div className="flex items-center mb-2 mr-4">
-                  <label className="text-sm font-semibold text-prime mr-2 w-32">
-                  Employee Name<span className="text-red-600 text-md font-bold">*</span>
-                  </label>
-                  <select
-                    name="employee_id"
-                    value={formData.employee_id}
-                    onChange={handleChange}
-                    className="selectbox flex-grow text-xs bg-box border p-3 rounded-md outline-none focus:border-bgGray focus:ring-bgGray focus:shadow-prime focus:shadow-sm"
-                  >
-                    <option value="" className="custom-option">
-                      Select Employee
-                    </option>
-                    {employee.map((employee) => (
-                      <option
-                        key={employee.id}
-                        value={employee.id}
-                        className="custom-option"
-                        required
-                      >
-                        {employee.firstname} - {employee.employee_id}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div className="flex items-center mb-2 mr-4">
-                  <label className="text-sm font-semibold text-prime mr-2 w-32">
-                    Username<span className="text-red-600 text-md font-bold">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    name="username"
-                    placeholder="Enter Username"
-                    value={formData.username}
-                    onChange={handleChange}
-                    required
-                    className="flex-grow text-xs bg-box border p-3  rounded-md outline-none transition ease-in-out delay-150 focus:shadow-prime focus:shadow-sm"
-                  />
-                </div>
-
-                <div className="flex items-center mb-2 mr-4">
-        <label className="text-sm font-semibold text-prime mr-2 w-32">
-          User Type<span className="text-red-600 text-md font-bold">*</span>
-        </label>
-        <select
-          name="usertype"
-          value={formData.usertype}
-          onChange={handleChange}
-          className="selectbox flex-grow text-xs bg-box border p-3 rounded-md outline-none focus:border-bgGray focus:ring-bgGray focus:shadow-prime focus:shadow-sm"
-        >
-          <option value="">Select User Type</option>
-          {access.map((type) => (
-            <option key={type.id} value={type.id}>
-              {type.name}
-            </option>
-          ))}
-        </select>
-      </div>
-
-      {showDepartment && (
-        <div className="flex items-center mb-2 mr-4">
-          <label className="text-sm font-semibold text-prime mr-2 w-32">
-            Department<span className="text-red-600 text-md font-bold">*</span>
-          </label>
-          <select
-            name="department"
-            value={formData.department}
-            onChange={handleChange}
-            className="selectbox flex-grow text-xs bg-box border p-3 rounded-md outline-none focus:border-bgGray focus:ring-bgGray focus:shadow-prime focus:shadow-sm"
-          >
-            <option value="">Select Department</option>
-            {departments.map((dept) => (
-              <option key={dept.id} value={dept.id}>
-                {dept.type}
-              </option>
-            ))}
-          </select>
-        </div>
-      )}
-              </div>
-
-              <div className="flex justify-center">
-                <button
-                  type="submit"
-                  className="hover:bg-prime border-2 border-prime ml-4 font-sui font-bold text-xs text-prime hover:text-white py-1 px-3 rounded-md shadow focus:outline-none"
-                >
-                  Submit
-                </button>
-              </div>
-            </form>
+  <div className="max-w-full w-full mt-3 m-1 mb-1 p-2 bg-box rounded-lg font-mont">
+    <div className="ticket-table mt-2">
+      <form onSubmit={handleSubmit} className="space-y-4 text-label">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-10 ml-10 pr-10 mb-0">
+          <div className="text-lg font-bold text-prime mb-2 font-mont">
+            User Details:
           </div>
         </div>
-      )}
 
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-x-10 ml-10 pr-10 mb-0">
+
+          {/* Employee Name Dropdown */}
+          <div className="flex items-center mb-2 mr-4">
+            <label className="text-sm font-semibold text-prime mr-2 w-32">
+              Employee Name<span className="text-red-600 text-md font-bold">*</span>
+            </label>
+            <select
+              name="employee_id"
+              value={formData.employee_id}
+              onChange={handleChange}
+              className="selectbox flex-grow text-xs bg-box border p-3 rounded-md outline-none focus:border-bgGray focus:ring-bgGray focus:shadow-prime focus:shadow-sm"
+            >
+              <option value="" className="custom-option">
+                Select Employee
+              </option>
+              {employee.map((employee) => (
+                <option
+                  key={employee.id}
+                  value={employee.id}
+                  className="custom-option"
+                >
+                  {employee.firstname} - {employee.employee_id}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Username Input */}
+          <div className="flex items-center mb-2 mr-4">
+            <label className="text-sm font-semibold text-prime mr-2 w-32">
+              Username<span className="text-red-600 text-md font-bold">*</span>
+            </label>
+            <input
+              type="text"
+              name="username"
+              placeholder="Enter Username"
+              value={formData.username}
+              onChange={handleChange}
+              required
+              className="flex-grow text-xs bg-box border p-3 rounded-md outline-none transition ease-in-out delay-150 focus:shadow-prime focus:shadow-sm"
+            />
+          </div>
+
+          {/* User Type Dropdown */}
+          <div className="flex items-center mb-2 mr-4">
+            <label className="text-sm font-semibold text-prime mr-2 w-32">
+              User Type<span className="text-red-600 text-md font-bold">*</span>
+            </label>
+            <select
+              name="usertype"
+              value={formData.usertype}
+              onChange={handleChange}
+              className="selectbox flex-grow text-xs bg-box border p-3 rounded-md outline-none focus:border-bgGray focus:ring-bgGray focus:shadow-prime focus:shadow-sm"
+            >
+              <option value="" className="custom-option">
+                Select User Type
+              </option>
+              {access.map((access) => (
+                <option
+                  key={access.id}
+                  value={access.id}
+                  className="custom-option"
+                >
+                  {access.name}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Department Dropdown - Conditional */}
+          {showDepartmentDropdown && (
+            <div className="flex items-center mb-2 mr-4">
+              <label className="text-sm font-semibold text-prime mr-2 w-32">
+                Department<span className="text-red-600 text-md font-bold">*</span>
+              </label>
+              <select
+                name="department"
+                value={formData.department}
+                onChange={handleChange}
+                className="selectbox flex-grow text-xs bg-box border p-3 rounded-md outline-none focus:border-bgGray focus:ring-bgGray focus:shadow-prime focus:shadow-sm"
+              >
+                <option value="" className="custom-option">
+                  Select Department
+                </option>
+                {departments.map((dept) => (
+                  <option key={dept.id} value={dept.id} className="custom-option">
+                    {dept.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+
+        </div>
+
+        <div className="flex justify-center">
+          <button
+            type="submit"
+            className="hover:bg-prime border-2 border-prime ml-4 font-sui font-bold text-xs text-prime hover:text-white py-1 px-3 rounded-md shadow focus:outline-none"
+          >
+            Submit
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+)}
       <div className="max-w-full w-full h-full bg-box p-5 rounded-lg font-mont">
         <div className="ticket-table mt-4">
           <h3 className="text-lg font-bold text-prime mb-4 font-mont flex justify-between items-center">

@@ -1,21 +1,22 @@
 <?php
 include 'config.php';
-header("Access-Control-Allow-Origin: *");
-header("Access-Control-Allow-Methods: GET, POST, OPTIONS");
-header("Access-Control-Allow-Headers: Content-Type, Authorization");
-// Include PHPMailer for email functionality
+
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
 require 'PHPMailer/vendor/autoload.php';
+header("Access-Control-Allow-Origin: *");
+header("Access-Control-Allow-Methods: GET, POST, OPTIONS");
+header("Access-Control-Allow-Headers: Content-Type, Authorization");
 
+// Process form submission
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    // Capture form data
+    // Extract data from POST
     $password = $_POST['password']; 
     $usernameD = $_POST['username'];
     $usertype = $_POST['usertype'];
     $id = $_POST['employee_id'];
-    $department = $_POST['department'] ?? null; // Capture the department value if provided
     $active = "1";
+    $department = isset($_POST['department']) ? $_POST['department'] : null; // Department ID (if provided)
 
     // Check if the username already exists
     $checkStmt = $conn->prepare("SELECT COUNT(*) FROM user WHERE username = ?");
@@ -26,11 +27,12 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $checkStmt->close();
 
     if ($count > 0) {
-        echo json_encode(['success' => false, 'message' => 'Username already exists.']);
+        $response = array('success' => false, 'message' => 'Username already exists.');
+        echo json_encode($response);
         exit;
     }
 
-    // Fetch employee details
+    // Fetch employee details based on employee_id
     $empStmt = $conn->prepare("SELECT firstname, lastname, mobile, location, photo, employee_id, email FROM employee WHERE id = ?");
     $empStmt->bind_param("s", $id);
     $empStmt->execute();
@@ -38,67 +40,43 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $found = $empStmt->fetch();
     $empStmt->close();
 
+    // Check if employee exists
     if (!$found) {
-        echo json_encode(['success' => false, 'message' => 'Employee not found.']);
+        $response = array('success' => false, 'message' => 'Employee not found.');
+        echo json_encode($response);
         exit;
     }
 
-    // Prepare SQL to insert user details, including the department (if provided)
-    $stmt = $conn->prepare("INSERT INTO user (firstname, lastname, username, email, usertype, mobile, location, employee_id, photo, is_active, password, ttype) 
-                            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
-    $stmt->bind_param("ssssssssssss", 
-        $firstname, 
-        $lastname, 
-        $usernameD, 
-        $email, 
-        $usertype, 
-        $mobile, 
-        $location, 
-        $employee_id, 
-        $photo, 
-        $active, 
-        $password, 
-        $department
-    );
+    // Prepare to insert the new user
+    $stmt = $conn->prepare("INSERT INTO user (firstname, lastname, username, email, usertype, mobile, location, employee_id, photo, is_active, password, ttype) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+    $stmt->bind_param("sssssssssssi", $firstname, $lastname, $usernameD, $email, $usertype, $mobile, $location, $employee_id, $photo, $active, $password, $department);
 
     if ($stmt->execute()) {
-        // User inserted successfully, now handle email sending
         $lstId = mysqli_insert_id($conn);
-
-        // Fetch SMTP settings
-        $smtpQuery = "SELECT * FROM smtp";
-        $smtpResult = mysqli_query($conn, $smtpQuery);
-        $smtpData = mysqli_fetch_assoc($smtpResult);
-
-        $username = $smtpData['username'];
-        $passwordD = $smtpData['password'];
-        $host = $smtpData['host'];
-        $smtpsecure = $smtpData['smtpsecure'];
-        $port = $smtpData['port'];
-        $fromname = $smtpData['fromname'];
-        $from = $smtpData['frommail'];
+        $rq = mysqli_fetch_array(mysqli_query($conn, "SELECT * FROM smtp"));
+        $username = $rq['username'];
+        $passwordD = $rq['password'];
+        $host = $rq['host'];
+        $smtpsecure = $rq['smtpsecure'];
+        $port = $rq['port'];
+        $fromname = $rq['fromname'];
+        $from = $rq['frommail'];
         $sub = "SAMPAT - AMS Login Details";
         $to = $email;
 
-        // Email content
+        // Set up email content
         $mailtxt = '<table align="center" border="0" cellspacing="3" cellpadding="3" width="100%" style="background:#f5f5f5; color: black; margin-top:10px;">
             <tbody>
             <tr>
-                <td colspan="2" style="font-weight:bold;text-align:center;font-size:17px;">SAMPAT - Asset Management System - Login Details</td>
+            <td colspan="2" style="font-weight:bold;text-align:center;font-size:17px;">SAMPAT - Asset Management System - Login Details</td>
             </tr>
             <tr>
-                <td><span style="font-weight:bold;">Dear ' . $firstname . '</span><br><br> 
-                    Welcome to SAMPAT - Asset Management System.<br><br>
-                    Username: ' . $usernameD . '<br>
-                    Password: ' . $password . '<br><br>
-                    Kindly login with credentials.<br><br>
-                    Regards,<br>SAMPAT
-                </td>
+            <td><span style="font-weight:bold;">Dear ' . $firstname . '</span><br><br> Welcome to SAMPAT - Asset Management System. <br><br>Username: ' . $usernameD . '<br>Password: ' . $password . '<br><br> Kindly login with credentials.<br><br>Regards,<br>SAMPAT</td>
             </tr>
             </tbody>
-        </table>';
+            </table>';
 
-        // Configure PHPMailer
+        // Set up PHPMailer
         $mail = new PHPMailer();
         $mail->IsSMTP();
         $mail->SMTPDebug = 0;
@@ -108,6 +86,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $mail->SMTPAuth = true;
         $mail->Username = $username;
         $mail->Password = $passwordD;
+
         $mail->FromName = $fromname;
         $mail->From = $from;
         $mail->addAddress($to);
@@ -116,17 +95,20 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $mail->Body = $mailtxt;
 
         if (!$mail->send()) {
-            echo json_encode(['success' => false, 'message' => 'User added, but email could not be sent.']);
+            $response = array('success' => false, 'message' => 'User added, but email could not be sent.');
         } else {
-            echo json_encode(['success' => true, 'message' => 'User added successfully and email sent.']);
+            $response = array('success' => true, 'message' => 'User added successfully and email sent.');
         }
+        echo json_encode($response);
     } else {
-        echo json_encode(['success' => false, 'message' => 'Database error: ' . $stmt->error]);
+        $response = array('success' => false, 'message' => 'Database error: ' . $stmt->error);
+        echo json_encode($response);
     }
 
     $stmt->close();
 } else {
-    echo json_encode(['success' => false, 'message' => 'Invalid request method.']);
+    $response = array('success' => false, 'message' => 'Invalid request method.');
+    echo json_encode($response);
 }
 
 $conn->close();
