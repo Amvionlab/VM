@@ -28,8 +28,8 @@ const Form = () => {
     username: "",
     employee_id: "",
     password: '',
-    usertype: "",
-    ttype: ""
+    department: "",
+    usertype: ""
   });
   const { user } = useContext(UserContext);
   const [ticketsPerPage, setTicketsPerPage] = useState(10);
@@ -39,8 +39,8 @@ const Form = () => {
   const [users, setUsers] = useState([]);
   const [filteredUsers, setFilteredUsers] = useState([]);
   const [filters, setFilters] = useState({});
-  const [departments, setDepartments] = useState([]);
-  const [showDepartmentDropdown, setShowDepartmentDropdown] = useState(false);
+  const [departments, setDepartments] = useState([]); // For departments
+  const [showDepartment, setShowDepartment] = useState(false);
   const [showFilter, setShowFilter] = useState({
     id: false,
     name: false,
@@ -69,69 +69,58 @@ const Form = () => {
   }, []);
 
   useEffect(() => {
-    const fetchAccess = async () => {
+    const fetchData = async () => {
       try {
-        const response = await fetch(`${baseURL}/backend/fetchAccess.php`);
-        const data = await response.json();
-        setAccess(data);
+        // Fetching user types
+        const userTypeResponse = await fetch(`${baseURL}/backend/fetchAccess.php`);
+        if (!userTypeResponse.ok) {
+          throw new Error("Failed to fetch user types.");
+        }
+        const userTypes = await userTypeResponse.json();
+        setAccess(userTypes);
+
+        // Fetching departments
+        const departmentResponse = await fetch(`${baseURL}/backend/fetchTicket_type.php`);
+        if (!departmentResponse.ok) {
+          throw new Error("Failed to fetch departments.");
+        }
+        const departmentData = await departmentResponse.json();
+        setDepartments(departmentData);
+
+        // Fetching employee data
+        const employeeResponse = await fetch(`${baseURL}/backend/fetchEmployees.php`);
+        if (!employeeResponse.ok) {
+          throw new Error("Failed to fetch employees.");
+        }
+        const employeeData = await employeeResponse.json();
+        setEmployee(employeeData);
+
+        // Fetching users
+        const usersResponse = await fetch(`${baseURL}/backend/fetchUsers.php`);
+        if (!usersResponse.ok) {
+          throw new Error("Failed to fetch users.");
+        }
+        const usersData = await usersResponse.json();
+        setUsers(usersData);
+
       } catch (error) {
-        console.error("Error fetching access:", error);
+        console.error("Error fetching data:", error);
+        toast.error("Failed to fetch data. Please try again later.");
       }
     };
 
-    const fetchEmployee = async () => {
-      try {
-        const response = await fetch(`${baseURL}/backend/fetchEmployees.php`);
-        const data = await response.json();
-        setEmployee(data);
-      } catch (error) {
-        console.error("Error fetching access:", error);
-      }
-    };
-console.log("emp",employee)
-    const fetchUsers = async () => {
-      try {
-        const response = await fetch(`${baseURL}/backend/fetchUsers.php`);
-        const data = await response.json();
-        setUsers(data);
-      } catch (error) {
-        console.error("Error fetching users:", error);
-      }
-    };
-
-    fetchAccess();
-    fetchUsers();
-    fetchEmployee();
-  }, []);
+    fetchData();
+  }, []); // Empty dependency array means this effect runs only once on mount
 
   const navigate = useNavigate();
 
-  useEffect(() => {
-    if (showDepartmentDropdown) {
-      fetch(`${baseURL}/backend/fetchTicket_type.php`) // Replace with your actual API endpoint
-        .then((response) => response.json())
-        .then((data) => {
-          const activeDepartments = data.filter((item) => item.is_active); // Filter active departments
-          setDepartments(activeDepartments);
-        })
-        .catch((error) => console.error("Error fetching departments:", error));
-    }
-  }, [showDepartmentDropdown]);
-
-  // Handle input changes
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
+    setFormData((prev) => ({ ...prev, [name]: value }));
 
-    // Show "Department" dropdown if "Support" or "Manager" is selected
-    if (name === "usertype" && (value === "Support" || value === "Manager")) {
-      setShowDepartmentDropdown(true);
-    } else if (name === "usertype") {
-      setShowDepartmentDropdown(false);
-      setFormData((prev) => ({ ...prev, ttype: "" })); // Reset department if not required
+    // Show department dropdown only if usertype is "Support" or "Manager"
+    if (name === "usertype") {
+      setShowDepartment(value === "support" || value === "manager");
     }
   };
 
@@ -147,40 +136,33 @@ console.log("emp",employee)
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    document.body.classList.add('cursor-wait', 'pointer-events-none');
-    
-    // Create a new FormData object
+    document.body.classList.add("cursor-wait", "pointer-events-none");
+
     const form = new FormData();
     for (const key in formData) {
-        // Append each form data key-value pair to the FormData object
-        form.append(key, formData[key]);
-    }
-
-    // Log the form values before submission
-    console.log("Form Values:");
-    for (const [key, value] of form.entries()) {
-        console.log(`${key}: ${value}`);
+      form.append(key, formData[key]);
     }
 
     try {
-        const response = await fetch(`${baseURL}/backend/user_add.php`, {
-            method: "POST",
-            body: form,
-        });
-        const result = await response.json();
-        if (!response.ok) {
-            throw new Error(result.message || "Something went wrong");
-        }
-        toast.success("User added");
-        document.body.classList.remove('cursor-wait', 'pointer-events-none');
-        window.location.reload();
-    } catch (error) {
-        console.error("Error submitting form:", error);
-        toast.error("Error adding user. " + error.message);
-        document.body.classList.remove('cursor-wait', 'pointer-events-none');
-    }
-};
+      const response = await fetch(`${baseURL}/backend/user_add.php`, {
+        method: "POST",
+        body: form,
+      });
+      const result = await response.json();
 
+      if (!response.ok) {
+        throw new Error(result.message || "Something went wrong");
+      }
+
+      toast.success("User added successfully");
+      window.location.reload();
+    } catch (error) {
+      console.error("Error submitting form:", error);
+      toast.error(`Error adding user: ${error.message}`);
+    } finally {
+      document.body.classList.remove("cursor-wait", "pointer-events-none");
+    }
+  };
 
   const pageCount = Math.ceil(filteredUsers.length / ticketsPerPage);
 
@@ -344,9 +326,7 @@ console.log("emp",employee)
                   />
                 </div>
 
-                <div>
-      {/* User Type Dropdown */}
-      <div className="flex items-center mb-2 mr-4">
+                <div className="flex items-center mb-2 mr-4">
         <label className="text-sm font-semibold text-prime mr-2 w-32">
           User Type<span className="text-red-600 text-md font-bold">*</span>
         </label>
@@ -356,49 +336,35 @@ console.log("emp",employee)
           onChange={handleChange}
           className="selectbox flex-grow text-xs bg-box border p-3 rounded-md outline-none focus:border-bgGray focus:ring-bgGray focus:shadow-prime focus:shadow-sm"
         >
-          <option value="" className="custom-option">
-            Select User Type
-          </option>
-          {access.map((access) => (
-            <option
-              key={access.id}
-              value={access.name} // Ensure this matches "Support" or "Manager"
-              className="custom-option"
-            >
-              {access.name}
+          <option value="">Select User Type</option>
+          {access.map((type) => (
+            <option key={type.id} value={type.id}>
+              {type.name}
             </option>
           ))}
         </select>
       </div>
 
-      {/* Department Dropdown (conditionally rendered) */}
-      {showDepartmentDropdown && (
+      {showDepartment && (
         <div className="flex items-center mb-2 mr-4">
           <label className="text-sm font-semibold text-prime mr-2 w-32">
             Department<span className="text-red-600 text-md font-bold">*</span>
           </label>
           <select
-            name="ttype"
-            value={formData.ttype}
+            name="department"
+            value={formData.department}
             onChange={handleChange}
             className="selectbox flex-grow text-xs bg-box border p-3 rounded-md outline-none focus:border-bgGray focus:ring-bgGray focus:shadow-prime focus:shadow-sm"
           >
-            <option value="" className="custom-option">
-              Select Department
-            </option>
-            {departments.map((department) => (
-              <option
-                key={department.id}
-                value={department.id}
-                className="custom-option"
-              >
-                {department.type}
+            <option value="">Select Department</option>
+            {departments.map((dept) => (
+              <option key={dept.id} value={dept.id}>
+                {dept.type}
               </option>
             ))}
           </select>
         </div>
       )}
-    </div>
               </div>
 
               <div className="flex justify-center">

@@ -1,119 +1,244 @@
-import React, { useState, useContext } from "react";
-import { useNavigate } from "react-router-dom";
-import {
-  faKey,
-  faBell,
-  faSearch,
-  faSignOutAlt,
-} from "@fortawesome/free-solid-svg-icons";
+import React, { useState, useEffect, useContext } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faBell, faKey, faSignOutAlt } from "@fortawesome/free-solid-svg-icons";
+import { Tooltip, Badge, Button } from "@mui/material";
+import { styled } from "@mui/system";
+import { baseURL } from '../../config.js'; // Update path as needed
+import { useNavigate } from "react-router-dom";
 import { UserContext } from "../UserContext/UserContext";
-import { Tooltip, tooltipClasses } from "@mui/material";
-import { styled } from '@mui/system';
+
+const PurpleTooltip = styled(({ className, ...props }) => (
+  <Tooltip {...props} classes={{ popper: className }} />
+))({
+  [`& .MuiTooltip-tooltip`]: {
+    backgroundColor: "purple",
+    color: "white",
+    fontSize: "0.875rem",
+  },
+  [`& .MuiTooltip-arrow`]: {
+    color: "purple",
+  },
+});
 
 function Header() {
-  const [open, setOpen] = useState(false);
+
+
+  const { user } = useContext(UserContext);
   const navigate = useNavigate();
-  const [isInputVisible, setInputVisible] = useState(false);
-  const handleIconClick = () => {
+  const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
+  const [notifications, setUsers] = useState([]);
+  const handleLogout = () => {
     localStorage.removeItem("isAuthenticated");
     localStorage.removeItem("user");
-    window.location.href = "/login";
+    window.location.reload();
+
   };
-  const PurpleTooltip = styled(({ className, ...props }) => (
-    <Tooltip {...props} classes={{ popper: className }} />
-  ))({
-    [`& .${tooltipClasses.tooltip}`]: {
-      backgroundColor: 'purple',
-      color: 'white',
-      fontSize: '0.875rem',
-    },
-    [`& .${tooltipClasses.arrow}`]: {
-      color: 'purple',
-    },
-  });
-  const handleSettingsClick = () => {
+
+  const fetchData = async () => {
+    try {
+      let url = `${baseURL}/backend/fetchNotifications.php?type=${user.accessId}&user=${user.userId}`;
+      if (user.area === '2') {
+        url += `&location=${user.location}`;
+      } else if (user.area === '3') {
+        url += `&branch=${user.branch}`;
+      }
+
+      const response = await fetch(url);
+      const data = await response.json();
+
+      setUsers(data);
+    } catch (error) {
+      console.error("Error fetching data:", error);
+    }
+  };
+
+  useEffect(() => {
+    fetchData();
+    const intervalId = setInterval(fetchData, 90000); // 90 seconds
+    return () => clearInterval(intervalId);
+  }, []);
+
+
+
+  const handlePasswordChange = () => {
     navigate("/password-change");
   };
 
-  const toggleSidebar = () => {
-    setOpen(!open);
+  const formatTime = (dateString) => {
+    const date = new Date(dateString);
+    return new Intl.DateTimeFormat('en-US', {
+      day: '2-digit',
+      month: 'short',
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true,
+    }).format(date);
   };
 
-  const { user } = useContext(UserContext);
+  const handleNotificationClose = (noteId, userId) => {
+    let url = `${baseURL}/backend/updateNotifications.php`;
+    const data = {
+      action: 'close', // Action type for closing a notification
+      noteId: noteId,
+      userId: userId
+    };
+
+    fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(data),
+    })
+      .then(response => response.json())
+      .then(result => {
+        // Handle success or failure response
+        fetchData();
+        console.log('Notification marked as read', result);
+      })
+      .catch(error => {
+        console.error('Error updating notification:', error);
+      });
+  };
+
+  const handleClearAll = (userId) => {
+    const url = `${baseURL}/backend/updateNotifications.php`;
+
+    // Collect all notification IDs to send in the request
+    const noteIds = notifications.map((note) => note.id);
+
+    // Prepare the request data
+    const data = {
+      action: 'clear_all', // Action type for clearing all notifications
+      userId: userId,
+      noteIds: noteIds, // Include notification IDs in the request
+    };
+
+    fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(data),
+    })
+      .then((response) => response.json())
+      .then((result) => {
+        if (result.status === 'success') {
+          console.log('All notifications marked as read:', result);
+          // Optionally update the UI state
+          fetchData(); // Refresh notifications list
+        } else {
+          console.error('Failed to clear all notifications:', result.message);
+        }
+      })
+      .catch((error) => {
+        console.error('Error clearing all notifications:', error);
+      });
+  };
 
   return (
-    <header className="border-b-2  fixed bg-box top-0 right-0 h-14 w-full flex justify-between items-center">
-      {/* Desktop Logo and Search */}
-      <div className="hidden sm:flex items-center">
-        {/* <div
-          className={`hidden sm:flex lg:flex absolute left-52 text-prime  rounded-full items-center justify-between transition-all duration-300 ${
-            isInputVisible ? "w-[13vw] scale-80" : "w-10 scale-80"
-          }`}
-        >
-          <FontAwesomeIcon
-            className="text-sm text-prime font-bold cursor-pointer mr-2 hover:text-flo"
-            icon={faSearch}
-            onClick={() => setInputVisible(!isInputVisible)}
-          />
-          <div
-            className={
-              isInputVisible
-                ? "p-1 rounded-full text-xs shadow-inner bg-second"
-                : "bg-transparent"
-            }
-          >
-            <input
-              type="text"
-              className={`bg-transparent text-prime outline-none text-xs ml-3 transition-all duration-300 transform ${
-                isInputVisible
-                  ? "scale-100 opacity-100 w-full"
-                  : "scale-0 opacity-0 w-0"
-              }`}
-              placeholder="Search Your Asset"
-              style={{ transformOrigin: "left center" }}
-              autoFocus={isInputVisible}
-            />
-          </div>
-        </div> */}
+    <header className="fixed bg-box top-0 right-0 h-[7vh] w-full flex justify-between items-center z-40">
+      <div className="relative flex justify-between items-center w-full pr-4 p-2 text-sm gap-5 z-50">
+        <div className="flex justify-start items-center text-base gap-5">
+          <h3 className="ml-52 font-bold text-flo font-raleway capitalize">Hi {user.firstname}, Welcome to SAMPAT TMS</h3>
+        </div>
+        {/* <p className="font-bold text-xs justify-center text-prime">© 2024, Amvion Labs Pvt. Ltd. All Rights Reserved.</p> */}
+
+
+        <div className="flex justify-end items-center space-x-4">
+          <PurpleTooltip title="Notifications" arrow>
+            <Badge badgeContent={notifications.length} color="primary">
+              <div
+                className={`cursor-pointer hover:text-flo flex items-center justify-center ${notifications.length > 0 ? 'fa-shake mx-3 text-flo' : 'text-prime'
+                  }`}
+                onClick={() => setIsNotificationsOpen((prev) => !prev)}
+              >
+                <FontAwesomeIcon icon={faBell} />
+              </div>
+            </Badge>
+          </PurpleTooltip>
+
+          <PurpleTooltip title="Change Password" arrow>
+            <div
+              className="cursor-pointer text-prime hover:text-flo flex items-center text-sm justify-center"
+              onClick={handlePasswordChange}
+            >
+              <FontAwesomeIcon icon={faKey} />
+            </div>
+          </PurpleTooltip>
+
+          <PurpleTooltip title="Log out" arrow>
+            <div
+              className="cursor-pointer text-prime hover:text-flo flex items-center text-sm justify-center"
+              onClick={handleLogout}
+            >
+              <FontAwesomeIcon icon={faSignOutAlt} />
+            </div>
+          </PurpleTooltip>
+        </div>
       </div>
 
-      {/* Desktop Icons for Settings, Notifications, and User */}
-      <div className="text-white text-base flex gap-6 mr-2 my-auto">
-        {/* Settings */}
-        <PurpleTooltip 
-               title="Change Password" 
-               arrow 
-             >
-        <div
-          
-          className="cursor-pointer text-prime hover:text-flo flex text-sm items-center justify-center"
-          onClick={handleSettingsClick}
-        >
-          <FontAwesomeIcon icon={faKey} />
+      {isNotificationsOpen && (
+        <div className="fixed p-2 top-12 border right-4 w-3/12  h-[60%] border-box shadow-2xl rounded-lg bg-blue-50 z-60">
+          <div className="h-[10%] inline-flex items-center gap-x-3 text-sm font-semibold leading-6 mb-1 text-gray-900" aria-expanded="false">
+            <i className="fa-solid fa-bell"></i> <span>Notifications</span>
+          </div>
+          <div className="h-[79%] overflow-y-auto p-1 mb-0.5">
+            {notifications.length > 0 ? (
+              notifications.map((note, index) => (
+                <div key={index} className="flex gap-x-6 p-2 mb-1 items-center hover:bg-second bg-box cursor-pointer rounded-lg shadow" onClick={() => navigate(note.href)} >
+                  <div className="flex text-xs items-center justify-center w-6 h-6 bg-box rounded-full">
+                    <FontAwesomeIcon icon={faBell} className="text-prime" />
+                  </div>
+                  <div className="w-[75%] overflow-hidden">
+                    <div className="flex justify-between items-center overflow-hidden mb-1">
+                      <div className="w-[52%] overflow-hidden text-ellipsis whitespace-nowrap font-semibold text-gray-900 text-sm" title={note.log_type === 1 ? "Asset Approval" :
+                        note.log_type === 2 ? "Bulk Asset Approval" :
+                          note.log_type === 3 ? "Transfer Approval" :
+                            note.log_type === 4 ? "Bulk Transfer Approval" :
+                              "unknown"}>
+                        {note.log_type === 1 ? "Asset Approval" :
+                          note.log_type === 2 ? "Bulk Asset Approval" :
+                            note.log_type === 3 ? "Transfer Approval" :
+                              note.log_type === 4 ? "Bulk Transfer Approval" :
+                                "unknown"}
+                      </div>
+                      <div className="w-[48%] overflow-hidden whitespace-nowrap text-xs ml-2 font-medium text-gray-600 text-right">
+                        {formatTime(note.post_date)}
+                      </div>
+                    </div>
+                    <div className="text-xs text-gray-700 font-normal truncate" title={note.log}>
+                      {note.log}
+                    </div>
+                  </div>
+                  <button
+                    className="flex items-center justify-center hover:font-bold font-semibold text-red-600"
+                    onClick={() => handleNotificationClose(note.id, user.userId)}
+                  >
+                    x
+                  </button>
+                </div>
+              ))
+            ) : (
+              <div className="text-center justify-center text-gray-800 font-bold text-sm pt-[40%] h-[80%]">No Notifications</div>
+            )}
+          </div>
+          <div className="flex text-xs font-bold text-box h-[10%] gap-2">
+            <div
+              className="text-center rounded p-2 w-[50%] bg-red-500 hover:bg-red-600 cursor-pointer"
+              onClick={() => setIsNotificationsOpen(false)}
+            >
+              Close
+            </div>
+            <div
+              className="text-center rounded p-2 w-[50%] bg-gray-500 hover:bg-gray-600 cursor-pointer"
+              onClick={() => handleClearAll(user.userId)} // Trigger the 'Clear All' action
+            >
+              Clear All
+            </div>
+          </div>
         </div>
-        </PurpleTooltip>
-        {/* Notifications */}
-       
-        <div className="cursor-pointer text-prime hover:text-flo flex text-sm items-center justify-center"
-          >
-          <FontAwesomeIcon icon={faBell} />
-         
-        </div>
-        
-        <PurpleTooltip 
-               title="Log out"
-               arrow 
-             >
-        <div
-          className="cursor-pointer text-prime hover:text-flo flex text-sm items-center justify-center"
-          
-          onClick={handleIconClick}
-        >
-          <FontAwesomeIcon icon={faSignOutAlt} />
-        </div>
-        </PurpleTooltip>
-      </div>
+      )}
     </header>
   );
 }

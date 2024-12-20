@@ -144,8 +144,8 @@ function Reports() {
   };
 
   return (
-    <div className="bg-second h-full overflow-hidden">
-      <div className="m-1 p-2 bg-box w-full flex justify-center items-center">
+    <div className="bg-second p-0.5 h-full overflow-hidden gap-1">
+      <div className="p-2 bg-box w-full flex justify-center items-center">
        
         <div className="flex justify-center items-center text-xs w-full gap-5 px-5">
           <p className="font-bold text-sm">Filter :</p>
@@ -186,8 +186,8 @@ function Reports() {
         </div>
       </div>
 
-      <div className="main flex h-[89%] gap-1">
-        <div className="section1 md:flex-col  w-[40%] bg-box rounded-md h-full">
+      <div className="main flex h-[89%] gap-0.5 mt-0.5">
+        <div className="section1 md:flex-col  w-[40%] bg-box rounded h-full">
           <div className="flex justify-center items-center gap-5 w-full p-2">
             {filters.map(({ item, title }, index) => (
               <div
@@ -205,7 +205,7 @@ function Reports() {
             ))}
           </div>
 
-          <div className="w-full flex-col justify-start items-center h-full rounded-md flex mb-2">
+          <div className="w-full flex-col justify-start items-center h-full rounded flex mb-2">
             <Chart
               chartType="PieChart"
               width="100%"

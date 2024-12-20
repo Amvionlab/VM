@@ -102,12 +102,13 @@ function App() {
 
   return (
     <Router>
+      <div className="App bg-second font-sui">
       <ToastContainer />
       {isAuthenticated ? (
         <>
           <div className="main-content flex overflow-y-hidden">
             <Side />
-            <div className="flex-1 md:overflow-y-auto pt-12 h-screen">
+            <div className="flex-1 md:overflow-y-auto pt-11 h-screen">
               <Header />
               <TicketProvider>
                 <Routes>
@@ -172,6 +173,7 @@ function App() {
               </TicketProvider>
             </div>
           </div>
+          
         </>
       ) : (
         <Routes>
@@ -179,7 +181,9 @@ function App() {
           <Route path="password-change" element={<ChangePass />} />
         </Routes>
       )}
+      </div>
     </Router>
+    
   );
 }
 
