@@ -1,7 +1,9 @@
 <?php 
 include 'config.php'; 
 
-$cond = "1=1 AND ticket.status != 9";
+$ttype = $_GET['ttype'];
+
+$cond = "1=1 ";
 if (isset($_GET['user'])) {
     $id = intval($_GET['user']);
     $cond = "ticket.created_by = $id";
@@ -10,6 +12,11 @@ if (isset($_GET['support'])) {
     $id = intval($_GET['support']);
     // Use FIND_IN_SET to check if $id is in the assignees list
     $cond = "(FIND_IN_SET($id, ticket.assignees) OR ticket.created_by = $id)";
+}
+
+if (isset($_GET['manager'])) {
+    $id = intval($_GET['manager']);  
+    $cond = "ticket.ticket_type = $ttype";
 }
 // Fetch tickets
 $sqlTickets = "SELECT 

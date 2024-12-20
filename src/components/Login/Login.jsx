@@ -30,6 +30,7 @@ const Login = ({ onLogin }) => {
           firstname: result.firstname,
           lastname: result.lastname,
           email: result.email,
+          ttype: result.ttype,
           mobile: result.mobile,
           photo: result.photo,
           accessId: result.accessid,

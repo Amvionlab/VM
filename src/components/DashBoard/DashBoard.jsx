@@ -61,7 +61,7 @@ const App = () => {
 
     fetchInitialData();
   }, []);
-
+console.log(user)
   useEffect(() => {
     if (ticketTypes.length > 0) {
       const initialTypeId = ticketTypes[0].id;
@@ -79,14 +79,19 @@ const App = () => {
         );
       } else if (user && user.accessId === "5") {
         response = await fetch(
-          `${baseURL}backend/update_status.php?support=${user.userId}&type=${value}`
+          `${baseURL}backend/update_status.php?support=${user.userId}&type=${value}&ttype=${user.ttype}`
+        );
+      }else if (user && user.accessId === "4") {
+        response = await fetch(
+          `${baseURL}backend/update_status.php?manager=${user.userId}&type=${value}&ttype=${user.ttype}`
+          
         );
       } else {
         response = await fetch(
           `${baseURL}backend/update_status.php?type=${value}`
         );
       }
-
+      console.log(response);
       const data = await response.json();
       setTickets(data);
     } catch (error) {
@@ -106,7 +111,7 @@ const App = () => {
 
   const fetchTicketTypes = async () => {
     try {
-      const response = await fetch(`${baseURL}backend/fetchTicket_type.php`);
+      const response = await fetch(`${baseURL}backend/fetchSla.php`);
       const data = await response.json();
       setTicketTypes(data);
     } catch (error) {
@@ -290,7 +295,7 @@ const App = () => {
                 }}
                 onClick={() => handleButtonClick(type.id)}
               >
-                {type.type}
+                {type.level}
               </Button>
             ))}
           </div>

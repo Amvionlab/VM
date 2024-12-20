@@ -67,7 +67,11 @@ function Reports() {
           );
         } else if (user && user.accessId === "5") {
           response = await fetch(
-            `${baseURL}backend/fetchTickets.php?support=${user.userId}`
+            `${baseURL}backend/fetchTickets.php?support=${user.userId}&ttype=${user.ttype}`
+          );
+        } else if (user && user.accessId === "4") {
+          response = await fetch(
+            `${baseURL}backend/fetchTickets.php?manager=${user.userId}&ttype=${user.ttype}`
           );
         } else {
           response = await fetch(`${baseURL}backend/fetchTickets.php`);

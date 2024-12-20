@@ -857,9 +857,9 @@ const SingleTicket = () => {
   };
 
   return (
-    <div className="bg-second h-full overflow-hidden p-1 font-sui">
+    <div className="bg-second h-full overflow-hidden p-0.5 font-sui">
       {user && user.ticketaction === "1" && (
-        <div className=" progress-container w-full bg-box  h-[15%] mt-1 mb-1">
+        <div className=" progress-container w-full bg-box  h-[15%] mb-0.5">
           <div className="bar bg-second ">
             <div
               className="bar__fill bg-flo"
@@ -883,10 +883,10 @@ const SingleTicket = () => {
       )}
 
       {/* <div className="progress-container w-full mb-3 pt-5 bg-box font-poppins shadow-md"></div> */}
-      <div className="overflow-y-scroll h-[85%]">
+      <div className="overflow-y-scroll h-[85%] -mb-0.5">
       <div className="w-full mx-auto bg-box ">
         <div className="py-2 px-7 flex justify-between items-center bg-white rounded">
-          <div className="flex items-center gap-2 text-prime font-bold">
+          <div className="flex items-center gap-1 text-prime font-bold">
             <HiTicket className="text-flo text-6xl" />
             <span className="text-base"> #{ticketData.id}</span>
             
@@ -1014,21 +1014,21 @@ const SingleTicket = () => {
                   <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white p-6 rounded-lg h-auto shadow-lg w-11/12 sm:w-1/2 lg:w-1/3">
                     <h2 className="text-lg font-semibold mb-4">Select Assignees</h2>
                     <Select
-                      isMulti
-                      name="customer_department"
-                      options={Accesses.map((Access) => ({
-                        value: Access.id,
-                        label: Access.name,
-                      }))}
-                      classNamePrefix="select"
-                      className="text-xs bg-second border p-1 border-none rounded-md outline-none focus:border-bgGray focus:ring-bgGray"
-                      onChange={(selectedOptions) => {
-                        handleSelectChange(selectedOptions);
-                        assignConfirm();
-                      }}
-                      value={selectedOptions}
-                      placeholder="Select Department"
-                    />
+  isMulti
+  name="customer_department"
+  options={Accesses.filter((access) => access.ttype === user.ttype).map((filteredAccess) => ({
+    value: filteredAccess.id,
+    label: filteredAccess.name,
+  }))}
+  classNamePrefix="select"
+  className="text-xs bg-second border p-1 border-none rounded-md outline-none focus:border-bgGray focus:ring-bgGray"
+  onChange={(selectedOptions) => {
+    handleSelectChange(selectedOptions);
+    assignConfirm();
+  }}
+  value={selectedOptions}
+  placeholder="Select Department"
+/>
 
                     <div className="mt-4 flex justify-end">
                       <button
@@ -1143,7 +1143,7 @@ const SingleTicket = () => {
 
       )}
 
-      <div className="max-w-full w-full mt-2 bg-box p-3 rounded text-xs">
+      <div className="max-w-full w-full bg-box p-3 rounded text-xs">
         <div className="flex justify-center space-x-4 mb-4">
           <button
             onClick={() => setShowTimesheet(true)}

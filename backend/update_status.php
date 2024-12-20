@@ -4,17 +4,20 @@ include 'config.php';
 
 if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     $type = $_GET['type'];
-    // Initialize condition variable
-    $cond = "ticket.ticket_type = $type"; // This ensures that the query is always valid
+    $ttype = $_GET['ttype'];
+    $cond = "1=1"; 
 
     if (isset($_GET['user'])) {
         $id = intval($_GET['user']);
-        $cond = "ticket.created_by = $id AND ticket.ticket_type = $type";
+        $cond = "ticket.created_by = $id AND ticket.sla_priority = $type";
     }
     if (isset($_GET['support'])) {
         $id = intval($_GET['support']);
-        // Use FIND_IN_SET to check if $id is in the assignees list
-        $cond = "(FIND_IN_SET($id, ticket.assignees) OR ticket.created_by = $id) AND ticket.ticket_type = $type";
+        $cond = "(FIND_IN_SET($id, ticket.assignees) OR ticket.created_by = $id) AND ticket.sla_priority = $type";
+    }
+    if (isset($_GET['manager'])) {
+        $id = intval($_GET['manager']);  
+        $cond = "ticket.sla_priority = $type AND ticket.ticket_type = $ttype";
     }
     
     $query = "
