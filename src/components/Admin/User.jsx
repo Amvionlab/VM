@@ -27,11 +27,15 @@ const Form = () => {
   const [formData, setFormData] = useState({
     username: "",
     employee_id: "",
-    password: ''
+    password: "",
+    department: "",
+    usertype: "",
   });
   const { user } = useContext(UserContext);
   const [ticketsPerPage, setTicketsPerPage] = useState(10);
   const [currentPage, setCurrentPage] = useState(0);
+  const [departments, setDepartments] = useState([]);
+  const [showDepartmentDropdown, setShowDepartmentDropdown] = useState(false);
   let i = 1;
 
   const [users, setUsers] = useState([]);
@@ -100,20 +104,51 @@ console.log("emp",employee)
     fetchEmployee();
   }, []);
 
-  const navigate = useNavigate();
-
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData({
-      ...formData,
+    setFormData((prev) => ({
+      ...prev,
       [name]: value,
-    });
-  };
+    }));
+  
+    if (name === "usertype") {
+      handleUserTypeChange(value);
+    }
+  };  
+
+  // Handle user type selection logic
+  const handleUserTypeChange = async (usertype) => {
+    // Find user type name from the access array if usertype is an ID
+    const selectedType = access.find((accessItem) => accessItem.id === usertype)?.name;
+  
+    if (selectedType === "Manager" || selectedType === "Support") {
+      setShowDepartmentDropdown(true);
+      await fetchDepartments(); // Fetch departments if not already loaded
+    } else {
+      setShowDepartmentDropdown(false);
+      setFormData((prev) => ({ ...prev, department: "" })); // Reset department field
+    }
+  };  
+
+  const navigate = useNavigate();
 
   const handleRowsPerPageChange = (e) => {
     const value = parseInt(e.target.value, 10);
     setTicketsPerPage(!isNaN(value) && value >= 1 ? value : 1);
     setCurrentPage(0);
+  };
+
+  const fetchDepartments = async () => {
+    try {
+      const response = await fetch(`${baseURL}/backend/fetchTicket_type.php`);
+      if (!response.ok) {
+        throw new Error("Failed to fetch departments");
+      }
+      const data = await response.json();
+      setDepartments(data);
+    } catch (error) {
+      console.error("Error fetching departments:", error);
+    }
   };
 
   const handlePageClick = ({ selected }) => {
@@ -155,7 +190,6 @@ console.log("emp",employee)
         document.body.classList.remove('cursor-wait', 'pointer-events-none');
     }
 };
-
 
   const pageCount = Math.ceil(filteredUsers.length / ticketsPerPage);
 
@@ -265,100 +299,119 @@ console.log("emp",employee)
   return (
     <div className="bg-second max-h-full h-full max-w-full text-xs mx-auto lg:overflow-y-hidden ticket-scroll">
       {showForm && (
-        <div className="max-w-full w-full mt-3 m-1 mb-1 p-2 bg-box rounded-lg font-mont">
-          <div className="ticket-table mt-2">
-            <form onSubmit={handleSubmit} className="space-y-4 text-label">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-10 ml-10 pr-10 mb-0">
-                <div className="text-lg font-bold text-prime mb-2 font-mont">
-                  User Details:
-                </div>
-              </div>
-
-              
-              
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-x-10 ml-10 pr-10 mb-0">
-
-              <div className="flex items-center mb-2 mr-4">
-                  <label className="text-sm font-semibold text-prime mr-2 w-32">
-                  Employee Name<span className="text-red-600 text-md font-bold">*</span>
-                  </label>
-                  <select
-                    name="employee_id"
-                    value={formData.employee_id}
-                    onChange={handleChange}
-                    className="selectbox flex-grow text-xs bg-box border p-3 rounded-md outline-none focus:border-bgGray focus:ring-bgGray focus:shadow-prime focus:shadow-sm"
-                  >
-                    <option value="" className="custom-option">
-                      Select Employee
-                    </option>
-                    {employee.map((employee) => (
-                      <option
-                        key={employee.id}
-                        value={employee.id}
-                        className="custom-option"
-                        required
-                      >
-                        {employee.firstname} - {employee.employee_id}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div className="flex items-center mb-2 mr-4">
-                  <label className="text-sm font-semibold text-prime mr-2 w-32">
-                    Username<span className="text-red-600 text-md font-bold">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    name="username"
-                    placeholder="Enter Username"
-                    value={formData.username}
-                    onChange={handleChange}
-                    required
-                    className="flex-grow text-xs bg-box border p-3  rounded-md outline-none transition ease-in-out delay-150 focus:shadow-prime focus:shadow-sm"
-                  />
-                </div>
-
-                <div className="flex items-center mb-2 mr-4">
-                  <label className="text-sm font-semibold text-prime mr-2 w-32">
-                    User Type<span className="text-red-600 text-md font-bold">*</span>
-                  </label>
-                  <select
-                    name="usertype"
-                    value={formData.usertype}
-                    onChange={handleChange}
-                    className="selectbox flex-grow text-xs bg-box border p-3 rounded-md outline-none focus:border-bgGray focus:ring-bgGray focus:shadow-prime focus:shadow-sm"
-                  >
-                    <option value="" className="custom-option">
-                      Select User Type
-                    </option>
-                    {access.map((access) => (
-                      <option
-                        key={access.id}
-                        value={access.id}
-                        className="custom-option"
-                        required
-                      >
-                        {access.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-
-              <div className="flex justify-center">
-                <button
-                  type="submit"
-                  className="hover:bg-prime border-2 border-prime ml-4 font-sui font-bold text-xs text-prime hover:text-white py-1 px-3 rounded-md shadow focus:outline-none"
-                >
-                  Submit
-                </button>
-              </div>
-            </form>
+  <div className="max-w-full w-full mt-3 m-1 mb-1 p-2 bg-box rounded-lg font-mont">
+    <div className="ticket-table mt-2">
+      <form onSubmit={handleSubmit} className="space-y-4 text-label">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-10 ml-10 pr-10 mb-0">
+          <div className="text-lg font-bold text-prime mb-2 font-mont">
+            User Details:
           </div>
         </div>
-      )}
 
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-x-10 ml-10 pr-10 mb-0">
+
+          {/* Employee Name Dropdown */}
+          <div className="flex items-center mb-2 mr-4">
+            <label className="text-sm font-semibold text-prime mr-2 w-32">
+              Employee Name<span className="text-red-600 text-md font-bold">*</span>
+            </label>
+            <select
+              name="employee_id"
+              value={formData.employee_id}
+              onChange={handleChange}
+              className="selectbox flex-grow text-xs bg-box border p-3 rounded-md outline-none focus:border-bgGray focus:ring-bgGray focus:shadow-prime focus:shadow-sm"
+            >
+              <option value="" className="custom-option">
+                Select Employee
+              </option>
+              {employee.map((employee) => (
+                <option
+                  key={employee.id}
+                  value={employee.id}
+                  className="custom-option"
+                >
+                  {employee.firstname} - {employee.employee_id}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Username Input */}
+          <div className="flex items-center mb-2 mr-4">
+            <label className="text-sm font-semibold text-prime mr-2 w-32">
+              Username<span className="text-red-600 text-md font-bold">*</span>
+            </label>
+            <input
+              type="text"
+              name="username"
+              placeholder="Enter Username"
+              value={formData.username}
+              onChange={handleChange}
+              required
+              className="flex-grow text-xs bg-box border p-3 rounded-md outline-none transition ease-in-out delay-150 focus:shadow-prime focus:shadow-sm"
+            />
+          </div>
+
+          {/* User Type Dropdown */}
+          <div className="flex items-center mb-2 mr-4">
+            <label className="text-sm font-semibold text-prime mr-2 w-32">
+              User Type<span className="text-red-600 text-md font-bold">*</span>
+            </label>
+            <select
+  name="usertype"
+  value={formData.usertype}
+  onChange={handleChange}
+  className="selectbox flex-grow text-xs bg-box border p-3 rounded-md outline-none focus:border-bgGray focus:ring-bgGray focus:shadow-prime focus:shadow-sm"
+>
+  <option value="" className="custom-option">
+    Select User Type
+  </option>
+  {access.map((access) => (
+    <option key={access.id} value={access.id} className="custom-option">
+      {access.name}
+    </option>
+  ))}
+</select>
+          </div>
+
+          {/* Department Dropdown - Conditional */}
+          {showDepartmentDropdown && (
+            <div className="flex items-center mb-2 mr-4">
+              <label className="text-sm font-semibold text-prime mr-2 w-32">
+                Department<span className="text-red-600 text-md font-bold">*</span>
+              </label>
+              <select
+                name="department"
+                value={formData.department}
+                onChange={handleChange}
+                className="selectbox flex-grow text-xs bg-box border p-3 rounded-md outline-none focus:border-bgGray focus:ring-bgGray focus:shadow-prime focus:shadow-sm"
+              >
+                <option value="" className="custom-option">
+                  Select Department
+                </option>
+                {departments.map((dept) => (
+                  <option key={dept.id} value={dept.id} className="custom-option">
+                    {dept.type}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+
+        </div>
+
+        <div className="flex justify-center">
+          <button
+            type="submit"
+            className="hover:bg-prime border-2 border-prime ml-4 font-sui font-bold text-xs text-prime hover:text-white py-1 px-3 rounded-md shadow focus:outline-none"
+          >
+            Submit
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+)}
       <div className="max-w-full w-full h-full bg-box p-5 rounded-lg font-mont">
         <div className="ticket-table mt-4">
           <h3 className="text-lg font-bold text-prime mb-4 font-mont flex justify-between items-center">

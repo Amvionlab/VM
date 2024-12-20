@@ -4,6 +4,9 @@ include 'config.php';
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
 require 'PHPMailer/vendor/autoload.php';
+header("Access-Control-Allow-Origin: *");
+header("Access-Control-Allow-Methods: GET, POST, OPTIONS");
+header("Access-Control-Allow-Headers: Content-Type, Authorization");
 
 // Process form submission
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
@@ -13,7 +16,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $usertype = $_POST['usertype'];
     $id = $_POST['employee_id'];
     $active = "1";
-    
+    $department = isset($_POST['department']) ? $_POST['department'] : null; // Department ID (if provided)
+
     // Check if the username already exists
     $checkStmt = $conn->prepare("SELECT COUNT(*) FROM user WHERE username = ?");
     $checkStmt->bind_param("s", $usernameD);
@@ -44,8 +48,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     }
 
     // Prepare to insert the new user
-    $stmt = $conn->prepare("INSERT INTO user (firstname, lastname, username, email, usertype, mobile, location, employee_id, photo, is_active, password) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
-    $stmt->bind_param("sssssssssss", $firstname, $lastname, $usernameD, $email, $usertype, $mobile, $location, $employee_id, $photo, $active, $password);
+    $stmt = $conn->prepare("INSERT INTO user (firstname, lastname, username, email, usertype, mobile, location, employee_id, photo, is_active, password, ttype) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+    $stmt->bind_param("sssssssssssi", $firstname, $lastname, $usernameD, $email, $usertype, $mobile, $location, $employee_id, $photo, $active, $password, $department);
 
     if ($stmt->execute()) {
         $lstId = mysqli_insert_id($conn);
