@@ -36,13 +36,8 @@ function Header() {
 
   const fetchData = async () => {
     try {
-      let url = `${baseURL}/backend/fetchNotifications.php?type=${user.accessId}&user=${user.userId}`;
-      if (user.area === '2') {
-        url += `&location=${user.location}`;
-      } else if (user.area === '3') {
-        url += `&branch=${user.branch}`;
-      }
-
+      let url = `${baseURL}/backend/fetchNotifications.php?type=${user.accessId}&user=${user.userId}&ttype=${user.ttype}`;
+     
       const response = await fetch(url);
       const data = await response.json();
 
@@ -179,10 +174,11 @@ function Header() {
       </div>
 
       {isNotificationsOpen && (
-        <div className="fixed p-2 top-12 border right-4 w-3/12  h-[60%] border-box shadow-2xl rounded-lg bg-blue-50 z-60">
+        <div className="absolute p-2 top-12 border right-4 w-3/12  min-h-60 border-box shadow-2xl rounded-lg bg-blue-50 z-50">
           <div className="h-[10%] inline-flex items-center gap-x-3 text-sm font-semibold leading-6 mb-1 text-gray-900" aria-expanded="false">
             <i className="fa-solid fa-bell"></i> <span>Notifications</span>
           </div>
+          
           <div className="h-[79%] overflow-y-auto p-1 mb-0.5">
             {notifications.length > 0 ? (
               notifications.map((note, index) => (
@@ -192,12 +188,12 @@ function Header() {
                   </div>
                   <div className="w-[75%] overflow-hidden">
                     <div className="flex justify-between items-center overflow-hidden mb-1">
-                      <div className="w-[52%] overflow-hidden text-ellipsis whitespace-nowrap font-semibold text-gray-900 text-sm" title={note.log_type === 1 ? "Asset Approval" :
+                      <div className="w-[52%] overflow-hidden text-ellipsis whitespace-nowrap font-semibold text-gray-900 text-sm" title={note.log_type === 1 ? "Ticket Created" :
                         note.log_type === 2 ? "Bulk Asset Approval" :
                           note.log_type === 3 ? "Transfer Approval" :
                             note.log_type === 4 ? "Bulk Transfer Approval" :
                               "unknown"}>
-                        {note.log_type === 1 ? "Asset Approval" :
+                        {note.log_type === 1 ? "Ticket Created" :
                           note.log_type === 2 ? "Bulk Asset Approval" :
                             note.log_type === 3 ? "Transfer Approval" :
                               note.log_type === 4 ? "Bulk Transfer Approval" :
@@ -220,7 +216,7 @@ function Header() {
                 </div>
               ))
             ) : (
-              <div className="text-center justify-center text-gray-800 font-bold text-sm pt-[40%] h-[80%]">No Notifications</div>
+              <div className="text-center justify-center text-gray-800 font-bold text-sm pt-[10%] pb-[10%] h-[80%]">No Notifications</div>
             )}
           </div>
           <div className="flex text-xs font-bold text-box h-[10%] gap-2">

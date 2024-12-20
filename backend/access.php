@@ -56,6 +56,7 @@ if (mysqli_num_rows($result) > 0) {
                 'employee_id' => $user['employee_id'],
                 'accessid' => $user['usertype'],
                 'email' => $user['email'],
+                'ttype' => $user['ttype'],
                 'mobile' => $user['mobile'],
                 'firstname' => $user['firstname'],
                 'lastname' => $user['lastname'],

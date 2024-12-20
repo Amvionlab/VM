@@ -133,14 +133,14 @@ if ($resultAccess->num_rows > 0) {
   }
 }
 
-$sqlSupport = "SELECT id, CONCAT(user.firstname, ' ', user.lastname) AS name FROM user WHERE usertype=5";
+$sqlSupport = "SELECT id, CONCAT(user.firstname, ' ', user.lastname) AS name, ttype FROM user WHERE usertype=5";
 $resultSupport = $conn->query($sqlSupport);
 
 $Support = array();
 
 if ($resultSupport->num_rows > 0) {
   while($row = $resultSupport->fetch_assoc()) {
-    $Support[] = array("id" => $row["id"], "name" => $row["name"]);
+    $Support[] = array("id" => $row["id"], "name" => $row["name"], "ttype" => $row["ttype"]);
   }
 }
 
