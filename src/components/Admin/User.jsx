@@ -110,22 +110,25 @@ console.log("emp",employee)
       ...prev,
       [name]: value,
     }));
-
+  
     if (name === "usertype") {
       handleUserTypeChange(value);
     }
-  };
+  };  
 
   // Handle user type selection logic
   const handleUserTypeChange = async (usertype) => {
-    if (usertype === "Manager" || usertype === "Support") {
+    // Find user type name from the access array if usertype is an ID
+    const selectedType = access.find((accessItem) => accessItem.id === usertype)?.name;
+  
+    if (selectedType === "Manager" || selectedType === "Support") {
       setShowDepartmentDropdown(true);
-      await fetchDepartments();
+      await fetchDepartments(); // Fetch departments if not already loaded
     } else {
       setShowDepartmentDropdown(false);
-      setFormData((prev) => ({ ...prev, department: "" })); // Reset department
+      setFormData((prev) => ({ ...prev, department: "" })); // Reset department field
     }
-  };
+  };  
 
   const navigate = useNavigate();
 
@@ -356,24 +359,20 @@ console.log("emp",employee)
               User Type<span className="text-red-600 text-md font-bold">*</span>
             </label>
             <select
-              name="usertype"
-              value={formData.usertype}
-              onChange={handleChange}
-              className="selectbox flex-grow text-xs bg-box border p-3 rounded-md outline-none focus:border-bgGray focus:ring-bgGray focus:shadow-prime focus:shadow-sm"
-            >
-              <option value="" className="custom-option">
-                Select User Type
-              </option>
-              {access.map((access) => (
-                <option
-                  key={access.id}
-                  value={access.id}
-                  className="custom-option"
-                >
-                  {access.name}
-                </option>
-              ))}
-            </select>
+  name="usertype"
+  value={formData.usertype}
+  onChange={handleChange}
+  className="selectbox flex-grow text-xs bg-box border p-3 rounded-md outline-none focus:border-bgGray focus:ring-bgGray focus:shadow-prime focus:shadow-sm"
+>
+  <option value="" className="custom-option">
+    Select User Type
+  </option>
+  {access.map((access) => (
+    <option key={access.id} value={access.id} className="custom-option">
+      {access.name}
+    </option>
+  ))}
+</select>
           </div>
 
           {/* Department Dropdown - Conditional */}
@@ -393,7 +392,7 @@ console.log("emp",employee)
                 </option>
                 {departments.map((dept) => (
                   <option key={dept.id} value={dept.id} className="custom-option">
-                    {dept.name}
+                    {dept.type}
                   </option>
                 ))}
               </select>
