@@ -16,7 +16,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $usertype = $_POST['usertype'];
     $id = $_POST['employee_id'];
     $active = "1";
-    $department = isset($_POST['department']) ? $_POST['department'] : null; // Department ID (if provided)
+    $department = isset($_POST['department']) ? $_POST['department'] : 0; // Department ID (if provided)
 
     // Check if the username already exists
     $checkStmt = $conn->prepare("SELECT COUNT(*) FROM user WHERE username = ?");
@@ -32,9 +32,17 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         exit;
     }
 
+    $firstname = null;
+$lastname = null;
+$mobile = null;
+$location = null;
+$photo = null;
+$employee_id = null;
+$email = null;
+
     // Fetch employee details based on employee_id
     $empStmt = $conn->prepare("SELECT firstname, lastname, mobile, location, photo, employee_id, email FROM employee WHERE id = ?");
-    $empStmt->bind_param("s", $id);
+    $empStmt->bind_param("i", $id);
     $empStmt->execute();
     $empStmt->bind_result($firstname, $lastname, $mobile, $location, $photo, $employee_id, $email);
     $found = $empStmt->fetch();
@@ -49,7 +57,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
     // Prepare to insert the new user
     $stmt = $conn->prepare("INSERT INTO user (firstname, lastname, username, email, usertype, mobile, location, employee_id, photo, is_active, password, ttype) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
-    $stmt->bind_param("sssssssssssi", $firstname, $lastname, $usernameD, $email, $usertype, $mobile, $location, $employee_id, $photo, $active, $password, $department);
+    $stmt->bind_param("ssssssssssss", $firstname, $lastname, $usernameD, $email, $usertype, $mobile, $location, $employee_id, $photo, $active, $password, $department);
 
     if ($stmt->execute()) {
         $lstId = mysqli_insert_id($conn);
@@ -61,17 +69,17 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $port = $rq['port'];
         $fromname = $rq['fromname'];
         $from = $rq['frommail'];
-        $sub = "SAMPAT - AMS Login Details";
+        $sub = "SAMPAT - TMS Login Details";
         $to = $email;
 
         // Set up email content
         $mailtxt = '<table align="center" border="0" cellspacing="3" cellpadding="3" width="100%" style="background:#f5f5f5; color: black; margin-top:10px;">
             <tbody>
             <tr>
-            <td colspan="2" style="font-weight:bold;text-align:center;font-size:17px;">SAMPAT - Asset Management System - Login Details</td>
+            <td colspan="2" style="font-weight:bold;text-align:center;font-size:17px;">SAMPAT - Ticket Management System - Login Details</td>
             </tr>
             <tr>
-            <td><span style="font-weight:bold;">Dear ' . $firstname . '</span><br><br> Welcome to SAMPAT - Asset Management System. <br><br>Username: ' . $usernameD . '<br>Password: ' . $password . '<br><br> Kindly login with credentials.<br><br>Regards,<br>SAMPAT</td>
+            <td><span style="font-weight:bold;">Dear ' . $firstname . '</span><br><br> Welcome to SAMPAT - Ticket Management System. <br><br>Username: ' . $usernameD . '<br>Password: ' . $password . '<br><br> Kindly login with credentials.<br><br>Regards,<br>SAMPAT</td>
             </tr>
             </tbody>
             </table>';
@@ -95,7 +103,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $mail->Body = $mailtxt;
 
         if (!$mail->send()) {
-            $response = array('success' => false, 'message' => 'User added, but email could not be sent.');
+            $response = array('success' => true, 'message' => 'User added, but email could not be sent.');
         } else {
             $response = array('success' => true, 'message' => 'User added successfully and email sent.');
         }
