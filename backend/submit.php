@@ -33,9 +33,6 @@ try {
         $contact_person = htmlspecialchars(trim($_POST['contact_person'] ?? ''));
         $contact_number = htmlspecialchars(trim($_POST['contact_number'] ?? ''));
         $contact_mail = htmlspecialchars(trim($_POST['contact_mail'] ?? ''));
-        if($_POST['contact_mail'] != ''){
-            $contact_mail = filter_var($_POST['contact_mail'], FILTER_SANITIZE_EMAIL);
-        }
         $nature_of_call = htmlspecialchars(trim($_POST['nature_of_call'] ?? ''));
         $ticket_type = htmlspecialchars(trim($_POST['ticket_type'] ?? ''));
         $ticket_service = htmlspecialchars(trim($_POST['ticket_service'] ?? ''));
@@ -46,54 +43,69 @@ try {
         $created_by = htmlspecialchars(trim($_POST['created_by'] ?? ''));
         $status = 1;
 
-        // Validate email format
-        if ((!filter_var($contact_mail, FILTER_VALIDATE_EMAIL )) && $_POST['contact_mail'] != '') {
-            throw new Exception('Invalid email format.');
+        // Validate email
+        if ($_POST['contact_mail'] != '') {
+            $contact_mail = filter_var($contact_mail, FILTER_SANITIZE_EMAIL);
+            if (!filter_var($contact_mail, FILTER_VALIDATE_EMAIL)) {
+                throw new Exception('Invalid email format.');
+            }
         }
 
         // Ensure no blank inserts
-        if (!empty($customer_name)) {
-            // Prepare and bind
+        if (!empty($customer_name) && !empty($ticket_type)) {
+            // Insert into the ticket table
             $stmt = $conn->prepare("INSERT INTO ticket (customer_name, customer_location, customer_department, contact_person, contact_number, contact_mail, nature_of_call, ticket_type, ticket_service, domain, sub_domain, sla_priority, issue_nature, path, created_by, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
             if ($stmt === false) {
                 throw new Exception('Database prepare failed: ' . $conn->error);
             }
             $stmt->bind_param("ssssssssssssssss", $customer_name, $customer_location, $customer_department, $contact_person, $contact_number, $contact_mail, $nature_of_call, $ticket_type, $ticket_service, $domain, $sub_domain, $sla_priority, $issue_nature, $attachmentPath, $created_by, $status);
 
-            // Execute the statement
             if ($stmt->execute()) {
-                // Retrieve the last inserted ID
                 $tid = $conn->insert_id;
-
-                // Collect and sanitize log data
-                $fromStatus = htmlspecialchars(trim('0'));
-                $toStatus = htmlspecialchars(trim('1'));
-                $date = date('d-m-Y');
-                $doneby = htmlspecialchars(trim($_POST['created_by'] ?? ''));
-
-                // Prepare and bind log statement
-                $logQuery = "INSERT INTO log (tid, done_by, from_status, to_status, date) VALUES (?, ?, ?, ?, ?)";
-                $logStmt = $conn->prepare($logQuery);
-                if ($logStmt === false) {
-                    throw new Exception('Database prepare for log failed: ' . $conn->error);
+            
+                // Insert into the notification table
+                $userid = htmlspecialchars(trim($_POST['created_by'] ?? '')); // Fetch user ID from POST data
+                $access_type = "2,3,4,5"; // Fixed access types
+                $log = "ticket created"; // Fixed log message
+                $log_type = 1; // Fixed log type
+                $href = "/dashboard"; // Fixed href value
+            
+                $notificationStmt = $conn->prepare("INSERT INTO notification (tid, ttype, userid, access_type, log, log_type, href) VALUES (?, ?, ?, ?, ?, ?, ?)");
+                if ($notificationStmt === false) {
+                    throw new Exception('Notification prepare failed: ' . $conn->error);
                 }
-                $logStmt->bind_param("issss", $tid, $doneby, $fromStatus, $toStatus, $date);
-
-                // Execute the log statement
-                if ($logStmt->execute()) {
-                    $response = array('status' => 'success', 'message' => 'Form submitted and data inserted successfully!');
-                } else {
+            
+                $notificationStmt->bind_param("iisssis", $tid, $ticket_type, $userid, $access_type, $log, $log_type, $href);
+            
+                if (!$notificationStmt->execute()) {
+                    throw new Exception('Notification insert failed: ' . $notificationStmt->error);
+                }
+            
+                // Insert log record
+                $fromStatus = '0';
+                $toStatus = '1';
+                $date = date('d-m-Y');
+                $logStmt = $conn->prepare("INSERT INTO log (tid, done_by, from_status, to_status, date) VALUES (?, ?, ?, ?, ?)");
+                if ($logStmt === false) {
+                    throw new Exception('Log prepare failed: ' . $conn->error);
+                }
+                $logStmt->bind_param("issss", $tid, $userid, $fromStatus, $toStatus, $date);
+            
+                if (!$logStmt->execute()) {
                     throw new Exception('Log insert failed: ' . $logStmt->error);
                 }
-
+            
+                $response = array('status' => 'success', 'message' => 'Form submitted, data inserted successfully, and notification added!');
+            
+                $notificationStmt->close();
                 $logStmt->close();
             } else {
-                throw new Exception('Database insert failed: ' . $stmt->error);
-            }
+                throw new Exception('Ticket insert failed: ' . $stmt->error);
+            }            
 
             $stmt->close();
         } else {
-            throw new Exception('Invalid input. Customer name and email are required.');
+            throw new Exception('Customer name and ticket type are required.');
         }
 
         $conn->close();
