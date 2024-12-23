@@ -11,13 +11,26 @@ $sql = "SELECT * FROM notification WHERE 1=1";
 $params = [];
 
 // Add conditions based on the type
-if ($type == '4' || $type == '5') {
+if ($type == '4') {
     $sql .= " AND FIND_IN_SET(?, access_type) AND NOT FIND_IN_SET(?, read_by) AND ttype = ?";
     $params[] = $type;
     $params[] = $user;
     $params[] = $ttype; // Assuming $ttype was meant to be $type, adjust logic if needed
+}else if ($type == '5') {
+    $sql .= " AND FIND_IN_SET(?, access_type) AND FIND_IN_SET(?, userid) AND NOT FIND_IN_SET(?, read_by) AND ttype = ?";
+    $params[] = $type;
+    $params[] = $user;
+    $params[] = $user;
+    $params[] = $ttype; // Assuming $ttype was meant to be $type, adjust logic if needed
 } elseif ($type == '2') {
-    $sql .= " AND ticket.created_by = ?";
+    $sql .= " AND FIND_IN_SET(?, access_type) AND FIND_IN_SET(?, userid) AND NOT FIND_IN_SET(?, read_by)";
+    $params[] = $type;
+    $params[] = $user;
+    $params[] = $user;
+}
+elseif ($type == '1' || $type == '3') {
+    $sql .= " AND FIND_IN_SET(?, access_type) AND NOT FIND_IN_SET(?, read_by)";
+    $params[] = $type;
     $params[] = $user;
 }
 
