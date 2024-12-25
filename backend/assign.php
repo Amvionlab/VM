@@ -6,6 +6,7 @@ header('Content-Type: application/json');
 
 // Initialize response array
 $response = [];
+$access_type = "2,3,4,5";
 
 // Disable error display to avoid HTML in the response
 ini_set('display_errors', 0);
@@ -73,9 +74,6 @@ try {
     }
     $stmt->close();
 
-    // Concatenate `created_by` and `assignees`
-    $access_type = empty($assignees) ? $created_by : $created_by . ',' . $assigneesString;
-
     // Check if `tid` already exists in the `notification` table
     $query = "SELECT COUNT(*) FROM notification WHERE tid = ?";
     $stmt = $conn->prepare($query);
@@ -97,6 +95,11 @@ try {
         $post_date = date('Y-m-d H:i:s'); // Current date and time
 
         $query = "INSERT INTO notification (tid, userid, access_type, ttype, log, log_type, href, post_date) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+        $stmt = $conn->prepare($query);
+        if (!$stmt) {
+            throw new Exception("Failed to prepare statement: " . $conn->error);
+        }
+        $stmt->bind_param("isssssss", $id, $assigneesString, $access_type, $ttype, $log, $log_type, $href, $post_date);
     } else {
         // Update existing notification
         $log = "User has been Assigned - Updated";
@@ -105,17 +108,11 @@ try {
         $post_date = date('Y-m-d H:i:s'); // Current date and time
 
         $query = "UPDATE notification SET userid = ?, access_type = ?, ttype = ?, log = ?, log_type = ?, href = ?, post_date = ? WHERE tid = ?";
-    }
-
-    $stmt = $conn->prepare($query);
-    if (!$stmt) {
-        throw new Exception("Failed to prepare statement: " . $conn->error);
-    }
-
-    if ($count == 0) {
-        $stmt->bind_param("iissssss", $id, $doneby, $access_type, $ttype, $log, $log_type, $href, $post_date);
-    } else {
-        $stmt->bind_param("issssssi", $doneby, $access_type, $ttype, $log, $log_type, $href, $post_date, $id);
+        $stmt = $conn->prepare($query);
+        if (!$stmt) {
+            throw new Exception("Failed to prepare statement: " . $conn->error);
+        }
+        $stmt->bind_param("sssssssi", $assigneesString, $access_type, $ttype, $log, $log_type, $href, $post_date, $id);
     }
 
     if (!$stmt->execute()) {
