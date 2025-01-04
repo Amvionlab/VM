@@ -102,7 +102,7 @@ try {
         $stmt->bind_param("isssssss", $id, $assigneesString, $access_type, $ttype, $log, $log_type, $href, $post_date);
     } else {
         // Update existing notification
-        $log = "User has been Assigned - Updated";
+        $log = "User has been Assigned";
         $log_type = 2;
         $href = "/dashboard";
         $post_date = date('Y-m-d H:i:s'); // Current date and time
