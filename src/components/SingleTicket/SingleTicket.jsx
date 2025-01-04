@@ -156,9 +156,6 @@ const SingleTicket = () => {
     }
   }, [users, filters]); // Update filteredUsers whenever users or filters change
 
-
-
-
   const handleFilterChange = (e, field, type) => {
     const value = e.target.value.toLowerCase();
     setFilters((prevFilters) => ({

@@ -1,0 +1,1 @@
+Unknown column 'ticket_type' in 'field list'

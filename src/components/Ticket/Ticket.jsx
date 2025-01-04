@@ -72,8 +72,6 @@ const Form = () => {
     }
   }, [customers]);
 
-
-
   const navigate = useNavigate();
 
   const handleChange = (e) => {
@@ -138,39 +136,36 @@ const Form = () => {
     document.body.classList.add('cursor-wait', 'pointer-events-none');
     const form = new FormData();
     for (const key in formData) {
-      form.append(key, formData[key]);
+        form.append(key, formData[key]);
     }
     if (attachment) {
-      form.append("attachment", attachment);
+        form.append("attachment", attachment);
     }
 
     try {
-     
-      const response = await fetch(`${baseURL}/backend/submit.php`, {
-        method: "POST",
-        body: form,
-      });
-      const result = await response.json();
-      if (!response.ok) {
-        throw new Error(result.message || "Something went wrong");
-      }
-      setSubmissionStatus({ success: true, message: result.message });
-      toast.success("Ticket added");
-      document.body.classList.remove('cursor-wait', 'pointer-events-none');
-      navigate("/dashboard");
+        const response = await fetch(`${baseURL}/backend/submit.php`, {
+            method: "POST",
+            body: form,
+        });
+        const result = await response.json();
+        if (!response.ok) {
+            throw new Error(result.message || "Something went wrong");
+        }
+        setSubmissionStatus({ success: true, message: result.message });
+        toast.success("Ticket added");
+        document.body.classList.remove('cursor-wait', 'pointer-events-none');
+        navigate("/dashboard");
     } catch (error) {
-      setSubmissionStatus({
-        success: false,
-        message:
-          "There was a problem with your fetch operation: " + error.message,
-      });
+        setSubmissionStatus({
+            success: false,
+            message: "There was a problem with your fetch operation: " + error.message,
+        });
     }
-  };
+};
 
   return (
     <div className="bg-second p-0.5 text-xs mx-auto sm:overflow-y-scroll lg::overflow-y-hidden h-auto ticket-scroll ">
       <div className="max-w-full bg-box p-3 h-[95%]">
-        
         <form onSubmit={handleSubmit} className="space-y-4 text-label">
           <div className="grid grid-cols-no ml-0 overflow-x-hidden md:grid-cols-2 gap-x-10 md:ml-10 md:pr-10 mb-0 ">
             <div className="font-mont font-semibold text-2xl mb-3">
@@ -205,7 +200,7 @@ const Form = () => {
             </div>
             <div className="flex items-center mb-3 mr-4">
               <label className="text-sm font-semibold text-prime mr-2 w-32">
-              Catagory <span className="text-red-600 text-md font-bold">*</span>
+              Category <span className="text-red-600 text-md font-bold">*</span>
               </label>
               <select
                 name="ticket_type"
@@ -215,7 +210,7 @@ const Form = () => {
                 className="flex-grow text-xs bg-box border p-1.5  rounded outline-none focus:border-flo focus:ring-flo max-w-72"
               >
                 <option value="" className="custom-option">
-                  Select Catagory
+                  Select Category
                 </option>
                 {ticketTypes.map((ticket) => (
                   <option
