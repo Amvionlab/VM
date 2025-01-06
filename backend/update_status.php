@@ -3,8 +3,8 @@
 include 'config.php'; 
 
 if ($_SERVER['REQUEST_METHOD'] === 'GET') {
-    $type = $_GET['type'];
-    $ttype = $_GET['ttype'];
+    $type = isset($_GET['type']) ? $_GET['type'] : null;
+$ttype = isset($_GET['ttype']) ? $_GET['ttype'] : null;
     $cond = "1=1"; 
 
     if (isset($_GET['user'])) {
