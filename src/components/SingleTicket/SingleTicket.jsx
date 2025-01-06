@@ -791,8 +791,6 @@ const SingleTicket = () => {
     }
   };
 
-
-
   const handleConfirm = async () => {
     const newStatus = statuses[selectedStep]?.id;
     const oldStatus = ticketData?.status;
