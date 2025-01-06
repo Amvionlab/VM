@@ -839,8 +839,8 @@ const SingleTicket = () => {
   ];
 
   const ticketDetails = [
-    { label: "Catagory", value: ticketData.ticket_noc_value },
-    { label: "Sub Catagory", value: ticketData.ticket_type_value },
+    { label: "Catagory", value: ticketData.ticket_type_value },
+    { label: "Sub Catagory", value: ticketData.ticket_noc_value },
     { label: "Type of Issue", value: ticketData.ticket_service_value },
     { label: "Division", value: ticketData.ticket_domain_value },
     { label: "Sub Division", value: ticketData.ticket_subdomain_value },
