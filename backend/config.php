@@ -1,6 +1,5 @@
 <?php
 
-
 header('Access-Control-Allow-Origin: *');
 header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
 header('Access-Control-Allow-Headers: Content-Type, Authorization');
@@ -35,6 +34,28 @@ function loadEnv($filePath)
         }
     }
 }
+
+
+$protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off' || $_SERVER['SERVER_PORT'] == 443) ? "https" : "http";
+
+    $host = $_SERVER['HTTP_HOST'];
+
+    // Get the directory part of the URI
+    $scriptPath = $_SERVER['SCRIPT_NAME']; // This returns the path of the current script
+    $directory = rtrim(dirname($scriptPath), '/\\') . '/'; // Trims off the trailing slash and ensures it ends with one
+
+    $mailUrl = $protocol . "://" . $host . $directory."mail.php";
+    function sendmail($a, $b) {
+        global $mailUrl;  // Access the global $mailUrl variable
+    
+        $a = (int)$a;
+        $b = (int)$b;
+        
+        $url = $mailUrl . "?id=$a&value=$b";
+        $response = file_get_contents($url);
+    
+        return $response;
+    }
 
 // Load the .env file
 loadEnv(__DIR__ . '/.env');
