@@ -67,6 +67,9 @@ const SingleTicket = () => {
   const [open, setOpen] = useState(false);
   const [selectedStep, setSelectedStep] = useState(null);
 
+  const [showTransferDialog, setShowTransferDialog] = useState(false);
+  const [departments, setDepartments] = useState([]); // Initialize as an empty array
+  const [selectedDepartment, setSelectedDepartment] = useState("");
 
   const [users, setUsers] = useState([]);
   const [filteredUsers, setFilteredUsers] = useState([]);
@@ -229,6 +232,66 @@ const SingleTicket = () => {
     });
     setFilteredUsers2(filtered);
   }, [filters, users2]);
+
+    // Fetch department values
+    useEffect(() => {
+      fetch(`${baseURL}backend/dropdown.php`)
+        .then((response) => {
+          if (!response.ok) {
+            throw new Error("Network response was not ok");
+          }
+          return response.json();
+        })
+        .then((data) => {
+          // Ensure the data contains "ticketTypes" array before setting it
+          if (data.ticketTypes && Array.isArray(data.ticketTypes)) {
+            setDepartments(data.ticketTypes); // Set the ticketTypes array
+          } else {
+            console.error("Expected ticketTypes array but got:", data);
+            setDepartments([]);
+          }
+        })
+        .catch((error) => {
+          console.error("Error fetching departments:", error);
+          setDepartments([]); // Ensure departments stays as an empty array on error
+        });
+    }, []);
+
+    const handleTransferSubmit = async () => {
+      if (!selectedDepartment) {
+        alert("Please select a department.");
+        return;
+      }
+    
+      const payload = {
+        tid: ticketId, // The current ticket ID
+        departmentId: selectedDepartment // The selected department ID
+      };
+    
+      try {
+        const response = await fetch(`${baseURL}backend/transfer.php`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(payload),
+        });
+    
+        const result = await response.json();
+        if (result.status === 'success') {
+          toast.success('Ticket successfully transferred!');
+          setShowTransferDialog(false); // Close the dialog
+          setSelectedDepartment(''); // Reset the dropdown
+          await fetchTicket(); 
+        } else {
+          alert(`Error: ${result.message}`);
+        }
+      } catch (error) {
+        console.error('Transfer failed:', error);
+        toast.error('Transfer failed')
+      }
+    };
+        
 
   const exportCSV = () => {
     // Get table headers
@@ -852,7 +915,7 @@ const SingleTicket = () => {
   };
 
   return (
-    <div className="bg-second h-full overflow-hidden p-0.5 font-sui">
+    <div className="bg-second h-screen overflow-hidden p-0.5 font-sui">
       {user && user.ticketaction === "1" && (
         <div className=" progress-container w-full bg-box  h-[15%] mb-0.5">
           <div className="bar bg-second ">
@@ -951,21 +1014,87 @@ const SingleTicket = () => {
             </div>
 
             {/* Ticket Details */}
-            <div className={`flex-1 ${user && user.assign === "1" && selectedOptions ? 'w-full lg:w-2/5' : 'w-full lg:w-1/2'}`}>
-              <h2 className="text-lg font-semibold mb-3 text-center text-gray-900">Ticket Details</h2>
-              <div className="overflow-x-auto rounded px-2 py-3 border font-sui">
-                <table className="min-w-full">
-                  <tbody>
-                    {ticketDetails.map((detail, index) => (
-                      <tr key={index}>
-                        <td className="text-sm font-medium text-prime whitespace-nowrap w-[40%]">{detail.label}</td>
-                        <td className="text-xs text-gray-800 font-normal">{detail.value}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
+            <div className={`flex-1 ${user && user.assign === "1" && selectedOptions ? 'w-full lg:w-2/5' : 'w-full lg:w-1/2'} relative`}>
+  <h2 className="text-lg font-semibold mb-3 text-center text-gray-900">Ticket Details</h2>
+  <div className="overflow-x-auto rounded px-2 py-3 border font-sui">
+    <table className="min-w-full">
+      <tbody>
+        {ticketDetails.map((detail, index) => (
+          <tr key={index}>
+            <td className="text-sm font-medium text-prime whitespace-nowrap w-[40%]">{detail.label}</td>
+            <td className="text-xs text-gray-800 font-normal">{detail.value}</td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  </div>
+  {/* Transfer Icon */}
+  <button
+  className="absolute top-0 right-0 mt-3 mr-3 bg-transparent text-blue-500 hover:text-blue-600 transition focus:outline-none"
+  onClick={() => setShowTransferDialog(true)}
+  title="Transfer Ticket"
+>
+  <img
+    src="/src/image/transfer_icon.png"
+    alt="Transfer Icon"
+    className="w-6 h-6"
+  />
+</button>
+
+  {/* Transfer Dialog */}
+  {showTransferDialog && (
+  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+    <div className="bg-white rounded-lg shadow-lg p-4 w-80" style={{ minHeight: "100px" }}>
+      <h3 className="text-lg font-semibold text-gray-900 mb-4 text-center">Transfer Ticket To</h3>
+      <div className="mb-4">
+        <label htmlFor="department" className="block text-sm font-medium text-gray-700 mb-2">
+          Select To Department:
+        </label>
+        <select
+          id="department"
+          className="block w-full p-2 border border-gray-300 rounded-lg"
+          value={selectedDepartment}
+          onChange={(e) => setSelectedDepartment(e.target.value)}
+        >
+          <option value="" disabled>
+            Select Department
+          </option>
+          {departments.length > 0 ? (
+            departments.map((dept, index) => (
+              <option key={index} value={dept.id}>
+                {dept.type}
+              </option>
+            ))
+          ) : (
+            <option disabled>No Departments Available</option>
+          )}
+        </select>
+      </div>
+      <div className="flex justify-end space-x-3">
+        <button
+          className="px-3 py-1 text-sm bg-gray-300 rounded hover:bg-gray-400 transition"
+          onClick={() => {
+            setShowTransferDialog(false); // Close the dialog
+            setSelectedDepartment(''); // Reset the form
+          }}
+        >
+          Cancel
+        </button>
+        <button
+          className="px-3 py-1 text-sm bg-blue-500 text-white rounded hover:bg-blue-600 transition"
+          onClick={() => {
+            handleTransferSubmit();
+            setShowTransferDialog(false); // Close the dialog
+            setSelectedDepartment(''); // Reset the form after submission
+          }}
+        >
+          Submit
+        </button>
+      </div>
+    </div>
+  </div>
+)}
+</div>
           </div>
 
           {/* Assignee Section */}
