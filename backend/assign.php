@@ -60,7 +60,7 @@ try {
     }
     $stmt->close();
 
-    // Fetch `created_by` and `ttype` from the ticket table
+    // Fetch `created_by` and `ticket_type` from the ticket table
     $query = "SELECT created_by, ticket_type FROM ticket WHERE id = ?";
     $stmt = $conn->prepare($query);
     if (!$stmt) {
@@ -68,14 +68,17 @@ try {
     }
     $stmt->bind_param("i", $id);
     $stmt->execute();
-    $stmt->bind_result($created_by, $ttype);
+    $stmt->bind_result($created_by, $ticket_type);
     if (!$stmt->fetch()) {
         throw new Exception("Failed to fetch ticket details");
     }
     $stmt->close();
 
-    // Check if `tid` already exists in the `notification` table
-    $query = "SELECT COUNT(*) FROM notification WHERE tid = ?";
+    // Combine `created_by` and `assignees` for `userid`
+    $userid = empty($assigneesString) ? $created_by : $created_by . ',' . $assigneesString;
+
+    // Check if `tid` with `log_type = 2` exists in the `notification` table
+    $query = "SELECT COUNT(*) FROM notification WHERE tid = ? AND log_type = 2";
     $stmt = $conn->prepare($query);
     if (!$stmt) {
         throw new Exception("Failed to prepare statement: " . $conn->error);
@@ -86,7 +89,6 @@ try {
     $stmt->fetch();
     $stmt->close();
 
-    // Perform insertion or update based on existence of `tid`
     if ($count == 0) {
         // Insert new notification
         $log = "User has been Assigned";
@@ -99,27 +101,27 @@ try {
         if (!$stmt) {
             throw new Exception("Failed to prepare statement: " . $conn->error);
         }
-        $stmt->bind_param("isssssss", $id, $assigneesString, $access_type, $ttype, $log, $log_type, $href, $post_date);
+        $stmt->bind_param("isssssss", $id, $userid, $access_type, $ticket_type, $log, $log_type, $href, $post_date);
     } else {
-        // Update existing notification
-        $log = "User has been Assigned";
+        // Update existing notification where log_type = 2
+        $log = "User has been Assigned - Updated";
         $log_type = 2;
         $href = "/dashboard";
         $post_date = date('Y-m-d H:i:s'); // Current date and time
 
-        $query = "UPDATE notification SET userid = ?, access_type = ?, ttype = ?, log = ?, log_type = ?, href = ?, post_date = ? WHERE tid = ?";
+        $query = "UPDATE notification SET userid = ?, access_type = ?, ttype = ?, log = ?, log_type = ?, href = ?, post_date = ? WHERE tid = ? AND log_type = 2";
         $stmt = $conn->prepare($query);
         if (!$stmt) {
             throw new Exception("Failed to prepare statement: " . $conn->error);
         }
-        $stmt->bind_param("sssssssi", $assigneesString, $access_type, $ttype, $log, $log_type, $href, $post_date, $id);
+        $stmt->bind_param("sssssssi", $userid, $access_type, $ticket_type, $log, $log_type, $href, $post_date, $id);
     }
 
     if (!$stmt->execute()) {
         throw new Exception("Failed to create or update notification: " . $stmt->error);
     }
-
     $stmt->close();
+
     $conn->close();
 
     // Success response
