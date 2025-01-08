@@ -2,10 +2,8 @@ import React, { useState, useEffect, useContext } from "react";
 import { toast } from "react-toastify";
 import { useNavigate } from "react-router-dom";
 import { baseURL } from "../../config.js";
-import { FaFilter } from "react-icons/fa";
 import * as XLSX from "xlsx";
 import jsPDF from "jspdf";
-import Paper from "@mui/material/Paper";
 import Table from "@mui/material/Table";
 import TableBody from "@mui/material/TableBody";
 import TableCell from "@mui/material/TableCell";
@@ -13,7 +11,6 @@ import TableContainer from "@mui/material/TableContainer";
 import TableHead from "@mui/material/TableHead";
 import TablePagination from "@mui/material/TablePagination";
 import TableRow from "@mui/material/TableRow";
-import ReactPaginate from "react-paginate";
 import html2canvas from "html2canvas";
 import { UserContext } from "../UserContext/UserContext.jsx";
 
