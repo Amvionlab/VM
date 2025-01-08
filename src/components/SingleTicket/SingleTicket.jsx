@@ -1029,6 +1029,7 @@ const SingleTicket = () => {
     </table>
   </div>
   {/* Transfer Icon */}
+  {user && user.assign === "1"  ? (
   <button
   className="absolute top-0 right-0 mt-3 mr-3 bg-transparent text-blue-500 hover:text-blue-600 transition focus:outline-none"
   onClick={() => setShowTransferDialog(true)}
@@ -1040,6 +1041,7 @@ const SingleTicket = () => {
     className="w-6 h-6"
   />
 </button>
+  ):<></>}
 
   {/* Transfer Dialog */}
   {showTransferDialog && (
@@ -1151,7 +1153,7 @@ const SingleTicket = () => {
     assignConfirm();
   }}
   value={selectedOptions}
-  placeholder="Select Department"
+  placeholder="Select Assignees"
 />
 
                     <div className="mt-4 flex justify-end">
