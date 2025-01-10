@@ -73,6 +73,7 @@ function Reports() {
           response = await fetch(
             `${baseURL}backend/fetchTickets.php?manager=${user.userId}&ttype=${user.ttype}`
           );
+          console.log(response)
         } else {
           response = await fetch(`${baseURL}backend/fetchTickets.php`);
         }

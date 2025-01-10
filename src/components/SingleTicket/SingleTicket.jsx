@@ -15,7 +15,7 @@ import html2canvas from "html2canvas";
 import ReactPaginate from "react-paginate";
 import Select from "react-select";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faEdit, faTrashAlt } from '@fortawesome/free-solid-svg-icons';
+import { faEdit, faTrashAlt,faCheckCircle, faTimesCircle } from '@fortawesome/free-solid-svg-icons';
 import { Table, TableHead, TableBody, TableRow, TableCell, TableContainer, IconButton, TextField, MenuItem, TablePagination, Paper,  InputBase } from '@mui/material';
 
 
@@ -49,7 +49,7 @@ const SingleTicket = () => {
     <Tooltip {...props} classes={{ popper: className }} />
   ))({
     [`& .${tooltipClasses.tooltip}`]: {
-      maxWidth: 900,
+      maxWidth: 300,
       backgroundColor: 'black',
     },
   });
@@ -257,6 +257,37 @@ const SingleTicket = () => {
         });
     }, []);
 
+    const handleVerificationSubmit = async () => {
+      const verificationStatus = ticketData.conf === 1 ? 'Not Verified' : 'Verified';
+
+      const payload = {
+        action: 'verify',
+        tid: ticketId,
+        status: verificationStatus,
+      };
+   
+      try {
+        const response = await fetch(`${baseURL}backend/transfer.php`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(payload),
+        });
+    
+        const result = await response.json();
+        if (result.status === 'success') {
+          toast.success(`Ticket ${verificationStatus}!`);
+          fetchTicket();
+        } else {
+          alert(`Error: ${result.message}`);
+        }
+      } catch (error) {
+        console.error('Verification failed:', error);
+        toast.error('Verification failed');
+      }
+    };
+
     const handleTransferSubmit = async () => {
       if (!selectedDepartment) {
         alert("Please select a department.");
@@ -264,6 +295,7 @@ const SingleTicket = () => {
       }
     
       const payload = {
+        action: 'transfer',
         tid: ticketId, // The current ticket ID
         departmentId: selectedDepartment // The selected department ID
       };
@@ -913,7 +945,7 @@ const SingleTicket = () => {
   const handleButtonClick = () => {
     setAddEntry(true);
   };
-
+console.log(user)
   return (
     <div className="bg-second h-screen overflow-hidden p-0.5 font-sui">
       {user && user.ticketaction === "1" && (
@@ -951,7 +983,7 @@ const SingleTicket = () => {
       
             <CustomTooltip
       title={
-        <div style={{ height: '350px', width: '900px', overflowY: 'auto' }} className="p-4">
+        <div style={{ width: '400px', overflowY: 'auto' }} className="p-4">
           {/* Example content */}
           <pre className="text-wrap">{ticketData.issue_nature}</pre>
          
@@ -998,7 +1030,31 @@ const SingleTicket = () => {
           <div className={`flex flex-col lg:flex-row gap-3 ${user && user.assign === "1" && selectedOptions ? 'w-full lg:w-4/5' : 'w-full'}`}>
             {/* Customer Details */}
             <div className={`flex-1 ${user && user.assign === "1" && selectedOptions ? 'w-full lg:w-2/5' : 'w-full lg:w-1/2'}`}>
-              <h2 className="text-lg text-center font-semibold mb-3 text-gray-900">Employee Details</h2>
+            <h2 className="text-lg text-center font-semibold mb-3 text-gray-900">
+           
+      Employee Details
+      {user && user.ttype === "5" && (
+  ticketData.conf === 0 ? (
+    <button
+      className="ml-4 w-auto bg-red-600 text-white text-xs px-2 py-1 rounded shadow-md transition duration-300 ease-in-out transform hover:scale-105 hover:bg-red-500 focus:outline-none"
+      onClick={handleVerificationSubmit}
+      title="Not Verified"
+    >
+      <FontAwesomeIcon icon={faTimesCircle} className="mr-2" />
+      Click to Verify
+    </button>
+  ) : (
+    <button
+      className="ml-4 w-auto bg-green-600 text-white text-xs px-2 py-1 rounded shadow-md transition duration-300 ease-in-out transform hover:scale-105 hover:bg-green-500 focus:outline-none"
+      onClick={handleVerificationSubmit}
+      title="Verified"
+    >
+      <FontAwesomeIcon icon={faCheckCircle} className="mr-2" />
+      Verified
+    </button>
+  )
+)}
+    </h2>
               <div className="overflow-x-auto rounded px-2 py-3 items-center border">
                 <table className="min-w-full divide-y divide-gray-200 font-sui">
                   <tbody>

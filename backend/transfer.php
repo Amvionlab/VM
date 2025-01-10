@@ -20,16 +20,19 @@ try {
     // Decode JSON input from the request body
     $input = json_decode(file_get_contents('php://input'), true);
 
-    // Extract tid and department id
+    // Extract action, tid, departmentId, and status
+    $action = $input['action'] ?? null;
     $tid = $input['tid'] ?? null;
     $departmentId = $input['departmentId'] ?? null;
+    $statusmsg = $input['status'] ?? null;
+    $status = ($statusmsg === 'Verified') ? 1 : 'as';
 
-    // Validate input
-    if (!$tid || !$departmentId) {
-        throw new Exception("Missing required fields: 'tid' or 'departmentId'");
+    // Validate common input
+    if (!$tid) {
+        throw new Exception("Missing required field: 'tid'");
     }
 
-    // Check if the tid exists in the ticket table
+    // Check if the ticket ID exists
     $query = "SELECT id FROM ticket WHERE id = ?";
     $stmt = $conn->prepare($query);
     if (!$stmt) {
@@ -45,16 +48,50 @@ try {
     }
     $stmt->close();
 
-    // Update the ticket_type column in the ticket table
-    $query = "UPDATE ticket SET ticket_type = ? WHERE id = ?";
-    $stmt = $conn->prepare($query);
-    if (!$stmt) {
-        throw new Exception("Failed to prepare statement: " . $conn->error);
-    }
-    $stmt->bind_param("ii", $departmentId, $tid);
+    // Perform actions based on the provided action type
+    switch ($action) {
+        case 'transfer':
+            if (!$departmentId) {
+                throw new Exception("Missing required field: 'departmentId' for transfer action");
+            }
 
-    if (!$stmt->execute()) {
-        throw new Exception("Failed to update ticket: " . $stmt->error);
+            // Transfer logic
+            $query = "UPDATE ticket SET ticket_type = ? WHERE id = ?";
+            $stmt = $conn->prepare($query);
+            if (!$stmt) {
+                throw new Exception("Failed to prepare statement: " . $conn->error);
+            }
+            $stmt->bind_param("ii", $departmentId, $tid);
+
+            if (!$stmt->execute()) {
+                throw new Exception("Failed to update ticket: " . $stmt->error);
+            }
+
+            $response['message'] = "Ticket transferred successfully.";
+            break;
+
+        case 'verify':
+            if (!$status) {
+                throw new Exception("Missing required field: 'status' for verify action");
+            }
+
+            // Verify logic
+            $query = "UPDATE ticket SET conf = ? WHERE id = ?";
+            $stmt = $conn->prepare($query);
+            if (!$stmt) {
+                throw new Exception("Failed to prepare statement: " . $conn->error);
+            }
+            $stmt->bind_param("si", $status, $tid);
+
+            if (!$stmt->execute()) {
+                throw new Exception("Failed to update ticket status: " . $stmt->error);
+            }
+
+            $response['message'] = "Ticket verification status updated successfully.";
+            break;
+
+        default:
+            throw new Exception("Invalid action type");
     }
 
     $stmt->close();
@@ -62,7 +99,6 @@ try {
 
     // Success response
     $response['status'] = 'success';
-    $response['message'] = "Ticket updated successfully.";
 } catch (Exception $e) {
     // Error response
     $response['status'] = 'error';

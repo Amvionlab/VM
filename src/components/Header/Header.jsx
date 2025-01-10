@@ -189,14 +189,12 @@ function Header() {
                   <div className="w-[75%] overflow-hidden">
                     <div className="flex justify-between items-center overflow-hidden mb-1">
                       <div className="w-[52%] overflow-hidden text-ellipsis whitespace-nowrap font-semibold text-gray-900 text-sm" title={note.log_type === 1 ? "Ticket Created" :
-                        note.log_type === 2 ? "Bulk Asset Approval" :
-                          note.log_type === 3 ? "Transfer Approval" :
-                            note.log_type === 4 ? "Bulk Transfer Approval" :
+                        note.log_type === 2 ? "Ticket Assigned" :
+                          note.log_type === 3 ? "Ticket Closed" :
                               "unknown"}>
                         {note.log_type === 1 ? "Ticket Created" :
-                          note.log_type === 2 ? "Bulk Asset Approval" :
-                            note.log_type === 3 ? "Transfer Approval" :
-                              note.log_type === 4 ? "Bulk Transfer Approval" :
+                          note.log_type === 2 ? "Ticket Assigned" :
+                          note.log_type === 3 ? "Ticket Closed" :
                                 "unknown"}
                       </div>
                       <div className="w-[48%] overflow-hidden whitespace-nowrap text-xs ml-2 font-medium text-gray-600 text-right">

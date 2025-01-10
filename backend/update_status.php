@@ -17,7 +17,13 @@ $ttype = isset($_GET['ttype']) ? $_GET['ttype'] : null;
     }
     if (isset($_GET['manager'])) {
         $id = intval($_GET['manager']);  
-        $cond = "ticket.sla_priority = $type AND ticket.ticket_type = $ttype";
+         
+        if ($ttype == 5) {
+            $cond = "((ticket.ticket_type = $ttype OR ((ticket.ticket_type NOT IN (2,6) AND ticket.customer_location NOT IN ('Corporate Office','Head Office'))) OR ticket.created_by = $id) AND ticket.sla_priority = $type)";
+        }else{
+            $cond = "((ticket.ticket_type = $ttype AND ( (ticket.customer_location IN ('Corporate Office','Head Office') OR ticket.conf=1)) AND ticket.sla_priority = $type))";
+       
+        } 
     }
     
     $query = "

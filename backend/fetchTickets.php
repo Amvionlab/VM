@@ -16,9 +16,15 @@ if (isset($_GET['support'])) {
 
 if (isset($_GET['manager'])) {
     $id = intval($_GET['manager']);  
-    $cond = "ticket.ticket_type = $ttype";
+     
+    if ($ttype == 5) {
+        $cond = "(ticket.ticket_type = $ttype OR ((ticket.ticket_type NOT IN (2,6)) AND (ticket.customer_location NOT IN ('Corporate Office','Head Office'))) OR ticket.created_by = $id )";
+    }else{
+        $cond = "(ticket.ticket_type = $ttype AND (ticket.customer_location IN ('Corporate Office','Head Office') OR ticket.conf=1) OR ticket.created_by = $id )";
+    } 
+
 }
-// Fetch tickets
+
 $sqlTickets = "SELECT 
             ticket.*,
             ticket_type.type AS type,

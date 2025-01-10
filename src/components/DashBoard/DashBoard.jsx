@@ -86,6 +86,7 @@ console.log(user)
           `${baseURL}backend/update_status.php?manager=${user.userId}&type=${value}&ttype=${user.ttype}`
           
         );
+    console.log(response)
       } else {
         response = await fetch(
           `${baseURL}backend/update_status.php?type=${value}`
