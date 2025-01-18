@@ -25,16 +25,21 @@ if (isset($inputData['action'])) {
             $result = $stmt->get_result();
             $row = $result->fetch_assoc();
 
-            $readBy = $row['read_by'] ? $row['read_by'] : '';
-            $newReadBy = $readBy ? $readBy . ',' . $userId : $userId;
+            $readBy = $row['read_by'] ? explode(',', $row['read_by']) : [];
+            if (!in_array($userId, $readBy)) {
+                $readBy[] = $userId;
+                $newReadBy = implode(',', $readBy);
 
-            // Update the notification's 'read_by' column
-            $updateQuery = "UPDATE notification SET read_by = ? WHERE id = ?";
-            $updateStmt = $conn->prepare($updateQuery);
-            $updateStmt->bind_param('si', $newReadBy, $noteId);
-            $updateStmt->execute();
+                // Update the notification's 'read_by' column
+                $updateQuery = "UPDATE notification SET read_by = ? WHERE id = ?";
+                $updateStmt = $conn->prepare($updateQuery);
+                $updateStmt->bind_param('si', $newReadBy, $noteId);
+                $updateStmt->execute();
 
-            echo json_encode(['status' => 'success', 'message' => 'Notification marked as read']);
+                echo json_encode(['status' => 'success', 'message' => 'Notification marked as read']);
+            } else {
+                echo json_encode(['status' => 'info', 'message' => 'Notification already marked as read']);
+            }
         }
     } elseif ($action === 'clear_all') {
         // Update notifications for the user only for specific notification IDs
@@ -56,11 +61,12 @@ if (isset($inputData['action'])) {
 
             while ($row = $result->fetch_assoc()) {
                 $noteId = $row['id'];
-                $readBy = $row['read_by'] ? $row['read_by'] : '';
+                $readBy = $row['read_by'] ? explode(',', $row['read_by']) : [];
 
                 // Only add the userId if it's not already in the 'read_by' column
-                if (strpos($readBy, (string)$userId) === false) {
-                    $newReadBy = $readBy ? $readBy . ',' . $userId : $userId;
+                if (!in_array($userId, $readBy)) {
+                    $readBy[] = $userId;
+                    $newReadBy = implode(',', $readBy);
 
                     // Update the notification's 'read_by' column
                     $updateQuery = "UPDATE notification SET read_by = ? WHERE id = ?";

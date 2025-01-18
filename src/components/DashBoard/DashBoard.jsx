@@ -136,8 +136,6 @@ console.log(user)
     setDraggedItem(ticket); // Save the dragged item
   };
 
-
-
   const handleDrop = (e, columnId) => {
     e.preventDefault();
     if (draggedItem) {
