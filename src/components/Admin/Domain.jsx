@@ -115,7 +115,7 @@ const Form = () => {
         throw new Error(result.message || "Something went wrong");
       }
       setSubmissionStatus({ success: true, message: result.message });
-      toast.success("Division added");
+      toast.success("Domain added");
       location.reload();
     } catch (error) {
       setSubmissionStatus({
@@ -301,7 +301,7 @@ const Form = () => {
             <form onSubmit={handleSubmit} className="space-y-4 text-label">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-x-10 ml-10 pr-10 mb-0">
                 <div className="text-lg font-bold text-prime mb-2 font-mont">
-                  Division Details:
+                  Domain Details:
                 </div>
               </div>
 
@@ -314,7 +314,7 @@ const Form = () => {
                   <input
                     type="text"
                     name="name"
-                    placeholder="Enter Division Name"
+                    placeholder="Enter Domain Name"
                     value={formData.name}
                     onChange={handleChange}
                     required
@@ -342,7 +342,7 @@ const Form = () => {
         <div className="ticket-table mt-8">
           <h2 className="text-lg font-bold text-prime mb-4 font-mont flex justify-between items-center">
            <div>
-            <span>Division Data </span>
+            <span>Domain Data </span>
             <span className="items-end">
               <button
                 onClick={() => setShowForm(!showForm)}

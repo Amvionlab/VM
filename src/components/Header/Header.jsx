@@ -174,7 +174,7 @@ function Header() {
       </div>
 
       {isNotificationsOpen && (
-  <div className="absolute p-2 top-12 border right-4 w-3/12 max-h-[90vh] overflow-y-auto border-box shadow-2xl rounded-lg bg-blue-50 z-50">
+  <div className="absolute p-2 top-12 border right-4 w-3/12 max-h-[60vh] overflow-y-auto border-box shadow-2xl rounded-lg bg-blue-50 z-50">
     {/* Header */}
     <div className="h-[10%] inline-flex items-center gap-x-3 text-sm font-semibold leading-6 mb-1 text-gray-900" aria-expanded="false">
       <i className="fa-solid fa-bell"></i> <span>Notifications</span>

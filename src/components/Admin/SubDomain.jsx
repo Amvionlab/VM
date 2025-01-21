@@ -204,7 +204,7 @@ const Form = () => {
           <form onSubmit={handleSubmit} className="space-y-4 text-label">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-x-10 ml-10 pr-10 mb-0">
               <div className="text-lg font-bold text-prime mb-2">
-                Sub Division Details:
+                Sub Domain Details:
               </div>
             </div>
             <div className="grid grid-cols-2 md:grid-cols-2 gap-x-10 ml-10 pr-10 mb-0">
@@ -218,7 +218,7 @@ const Form = () => {
                   value={formData.name}
                   onChange={handleChange}
                   required
-                  placeholder="Enter Sub Division Name"
+                  placeholder="Enter Sub Domain Name"
                   className="flex-grow text-xs bg-box border w-80 border-gray-400 p-2 outline-none transition ease-in-out delay-150"
                 />
               </div>
@@ -257,13 +257,13 @@ const Form = () => {
         <div className="ticket-table mt-8">
           <h2 className="text-lg font-bold text-prime mb-2 flex justify-between items-center">
             <div>
-              <span>Sub Division Data</span>
+              <span>Sub Domain Data</span>
               <span className="items-end">
                 <button
                   onClick={() => setShowForm(!showForm)}
                   className="hover:bg-prime border-2 border-prime ml-4 font-sui font-bold text-xs text-prime hover:text-white py-1 px-3 rounded-md shadow focus:outline-none"
                 >
-                  {showForm ? "Close" : "+ Add Sub Division"}
+                  {showForm ? "Close" : "+ Add Sub Domain"}
                 </button>
               </span>
             </div>

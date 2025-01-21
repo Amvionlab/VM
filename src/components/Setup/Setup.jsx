@@ -26,8 +26,8 @@ function Setup() {
       { title: "User", icon: <FontAwesomeIcon icon={faUser} />, path: "/admin/user" },
        ],
     BASIC: [
-      { title: "Division", icon: <FontAwesomeIcon icon={faGlobe} />, path: "/admin/domain" },
-      { title: "Sub Division", icon: <FontAwesomeIcon icon={faSitemap} />, path: "/admin/subdomain" },
+      { title: "Domain", icon: <FontAwesomeIcon icon={faGlobe} />, path: "/admin/domain" },
+      { title: "Sub Domain", icon: <FontAwesomeIcon icon={faSitemap} />, path: "/admin/subdomain" },
       { title: "Branch", icon: <FontAwesomeIcon icon={faMapMarkedAlt} />, path: "/admin/location" },
       { title: "SLA", icon: <FontAwesomeIcon icon={faFlag} />, path: "/admin/sla" },
     ],

@@ -15,17 +15,17 @@ $ttype = isset($_GET['ttype']) ? $_GET['ttype'] : null;
         $id = intval($_GET['support']);
         $cond = "(FIND_IN_SET($id, ticket.assignees) OR ticket.created_by = $id) AND ticket.sla_priority = $type";
     }
+   
     if (isset($_GET['manager'])) {
         $id = intval($_GET['manager']);  
          
         if ($ttype == 5) {
-            $cond = "((ticket.ticket_type = $ttype OR ((ticket.ticket_type NOT IN (2,6) AND ticket.customer_location NOT IN ('Corporate Office','Head Office'))) OR ticket.created_by = $id) AND ticket.sla_priority = $type)";
+            $cond = "((ticket.ticket_type = $ttype OR ((ticket.ticket_type NOT IN (2,6)) AND (ticket.customer_location NOT IN ('Corporate Office','Head Office'))) OR ticket.created_by = $id ) AND ticket.sla_priority = $type)";
         }else{
-            $cond = "((ticket.ticket_type = $ttype AND ( (ticket.customer_location IN ('Corporate Office','Head Office') OR ticket.conf=1)) AND ticket.sla_priority = $type))";
-       
+            $cond = "((ticket.ticket_type = $ttype AND (ticket.customer_location IN ('Corporate Office','Head Office') OR ticket.conf=1) OR ticket.created_by = $id ) AND ticket.sla_priority = $type)";
         } 
-    }
     
+    }
     $query = "
     SELECT 
         ticket.*,
