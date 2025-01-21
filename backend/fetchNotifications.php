@@ -4,59 +4,44 @@ include 'config.php';
 
 $type = isset($_GET['type']) ? $_GET['type'] : '';
 $user = isset($_GET['user']) ? $_GET['user'] : '';
-$branch = isset($_GET['branch']) ? $_GET['branch'] : '';
-$location = isset($_GET['location']) ? $_GET['location'] : '';
+$ttype = isset($_GET['ttype']) ? $_GET['ttype'] : '';
+// Initialize base SQL query
+$sql = "SELECT * FROM notification WHERE 1=1";
 
-// Initialize an array to hold branch IDs if needed
-$branchIds = [];
+$params = [];
 
-// Check if location is specified
-if ($location) {
-    // Sanitize location
-    $location = $conn->real_escape_string($location);
-
-    // Fetch all equivalent 'id's for the specified location from the 'branch' table
-    $locationSql = "SELECT id FROM branch WHERE location_id = '$location'";
-    $locationResult = $conn->query($locationSql);
-
-    if ($locationResult && $locationResult->num_rows > 0) {
-        while ($row = $locationResult->fetch_assoc()) {
-            $branchIds[] = $row['id'];
-        }
-    }
-
-    // If there are matching branch IDs for the location, apply them as filters
-    if (!empty($branchIds)) {
-        $branchIdsStr = implode(',', $branchIds);
-        $branchCondition = " AND (" . implode(' OR ', array_map(fn($id) => "FIND_IN_SET('$id', branch)", $branchIds)) . ")";
-    } else {
-        // If no matching branch IDs, return an empty result set
-        echo json_encode([]);
-        $conn->close();
-        exit;
-    }
-} elseif ($branch) {
-    // If only branch is provided, check if the branch is present in the branch column
-    $branch = $conn->real_escape_string($branch);
-    $branchCondition = " AND FIND_IN_SET('$branch', branch)";
-} else {
-    $branchCondition = ""; // No branch condition if neither is set
+// Add conditions based on the type
+if ($type == '4') {
+    $sql .= " AND FIND_IN_SET(?, access_type) AND NOT FIND_IN_SET(?, read_by) AND ttype = ?";
+    $params[] = $type;
+    $params[] = $user;
+    $params[] = $ttype; // Assuming $ttype was meant to be $type, adjust logic if needed
+}else if ($type == '5') {
+    $sql .= " AND FIND_IN_SET(?, access_type) AND FIND_IN_SET(?, userid) AND NOT FIND_IN_SET(?, read_by) AND ttype = ?";
+    $params[] = $type;
+    $params[] = $user;
+    $params[] = $user;
+    $params[] = $ttype; // Assuming $ttype was meant to be $type, adjust logic if needed
+} elseif ($type == '2') {
+    $sql .= " AND FIND_IN_SET(?, access_type) AND FIND_IN_SET(?, userid) AND NOT FIND_IN_SET(?, read_by)";
+    $params[] = $type;
+    $params[] = $user;
+    $params[] = $user;
 }
-
-// Prepare SQL query with the specified conditions
-$sql = "
-    SELECT * FROM notification
-    WHERE 1=1
-    AND FIND_IN_SET(?, access_type)
-    AND NOT FIND_IN_SET(?, read_by)
-    $branchCondition
-";
+elseif ($type == '1' || $type == '3') {
+    $sql .= " AND FIND_IN_SET(?, access_type) AND NOT FIND_IN_SET(?, read_by)";
+    $params[] = $type;
+    $params[] = $user;
+}
 
 // Prepare the statement
 $stmt = $conn->prepare($sql);
 
-// Bind parameters
-$stmt->bind_param("ss", $type, $user);
+// Dynamically bind parameters
+if (count($params) > 0) {
+    $paramTypes = str_repeat("s", count($params));
+    $stmt->bind_param($paramTypes, ...$params);
+}
 
 // Execute the statement
 $stmt->execute();
@@ -70,9 +55,12 @@ if ($result->num_rows > 0) {
     }
 }
 
+// Free result and close connections
+$result->free();
 $stmt->close();
 $conn->close();
 
+// Output the result as JSON
 echo json_encode($notifications);
 
 ?>
