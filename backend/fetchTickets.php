@@ -1,7 +1,7 @@
 <?php 
 include 'config.php'; 
 
-$ttype = $_GET['ttype'];
+$ttype = isset($_GET['ttype']) ? $_GET['ttype'] : null;
 
 $cond = "1=1 ";
 if (isset($_GET['user'])) {

@@ -188,7 +188,7 @@ function Header() {
         </div>
         <div className="w-[75%] overflow-hidden">
           <div className="flex justify-between items-center overflow-hidden mb-1">
-            <div className="w-[52%] overflow-hidden text-ellipsis whitespace-nowrap font-semibold text-gray-900 text-sm" title={
+            <div className="w-[52%] overflow-hidden text-ellipsis whitespace-nowrap font-semibold text-gray-900 text-xs" title={
                     note.log_type === 1
                       ? "Ticket Created"
                       : note.log_type === 2
@@ -210,7 +210,7 @@ function Header() {
             </div>
           </div>
           <div className="text-xs text-gray-700 font-normal truncate" title={note.log}>
-            {note.log}
+            #{note.tid} {note.log}
           </div>
         </div>
         <button
