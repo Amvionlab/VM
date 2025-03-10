@@ -203,7 +203,7 @@ const Form = () => {
             <form onSubmit={handleSubmit} className="space-y-4 text-label">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-x-10 ml-10 pr-10 mb-0">
                 <div className="text-lg font-bold text-prime mb-2 font-mont">
-                  Ticket NOC Details:
+                  Ticket Sub Category Details:
                 </div>
               </div>
 

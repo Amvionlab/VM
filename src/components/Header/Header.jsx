@@ -174,29 +174,21 @@ function Header() {
       </div>
 
       {isNotificationsOpen && (
-  <div className="absolute p-2 top-12 border right-4 w-3/12 max-h-[90vh] overflow-y-auto border-box shadow-2xl rounded-lg bg-blue-50 z-50">
-    {/* Header */}
-    <div className="h-[10%] inline-flex items-center gap-x-3 text-sm font-semibold leading-6 mb-1 text-gray-900" aria-expanded="false">
-      <i className="fa-solid fa-bell"></i> <span>Notifications</span>
-    </div>
 
-    {/* Notifications List */}
-    <div className="overflow-y-auto p-1 mb-0.5">
-      {notifications.length > 0 ? (
-        notifications.map((note, index) => (
-          <div
-            key={index}
-            className="flex gap-x-6 p-2 mb-1 items-center hover:bg-second bg-box cursor-pointer rounded-lg shadow"
-            onClick={() => navigate(note.href)}
-          >
-            <div className="flex text-xs items-center justify-center w-6 h-6 bg-box rounded-full">
-              <FontAwesomeIcon icon={faBell} className="text-prime" />
-            </div>
-            <div className="w-[75%] overflow-hidden">
-              <div className="flex justify-between items-center overflow-hidden mb-1">
-                <div
-                  className="w-[52%] overflow-hidden text-ellipsis whitespace-nowrap font-semibold text-gray-900 text-sm"
-                  title={
+<div className="absolute p-2 top-12 border right-4 w-3/12  h-[70vh] border-box shadow-2xl rounded-lg bg-blue-50 z-60">
+<div className="h-[10%] inline-flex items-center gap-x-3 text-sm font-semibold leading-6 mb-1 text-gray-900" aria-expanded="false">
+  <i className="fa-solid fa-bell"></i> <span>Notifications</span>
+</div>
+<div className="h-[79%] overflow-y-auto p-1 mb-0.5">
+  {notifications.length > 0 ? (
+    notifications.map((note, index) => (
+      <div key={index} className="flex gap-x-6 p-2 mb-1 items-center hover:bg-second bg-box cursor-pointer rounded-lg shadow" onClick={() => navigate(note.href)} >
+        <div className="flex text-xs items-center justify-center w-6 h-6 bg-box rounded-full">
+          <FontAwesomeIcon icon={faBell} className="text-prime" />
+        </div>
+        <div className="w-[75%] overflow-hidden">
+          <div className="flex justify-between items-center overflow-hidden mb-1">
+            <div className="w-[52%] overflow-hidden text-ellipsis whitespace-nowrap font-semibold text-gray-900 text-xs" title={
                     note.log_type === 1
                       ? "Ticket Created"
                       : note.log_type === 2
@@ -204,44 +196,36 @@ function Header() {
                       : note.log_type === 3
                       ? "Ticket Closed"
                       : "unknown"
-                  }
-                >
-                  {note.log_type === 1
+                  }>
+             {note.log_type === 1
                     ? "Ticket Created"
                     : note.log_type === 2
                     ? "Ticket Assigned"
                     : note.log_type === 3
                     ? "Ticket Closed"
                     : "unknown"}
-                </div>
-                <div className="w-[48%] overflow-hidden whitespace-nowrap text-xs ml-2 font-medium text-gray-600 text-right">
-                  {formatTime(note.post_date)}
-                </div>
-              </div>
-              <div className="text-xs text-gray-700 font-normal truncate" title={note.log}>
-                {note.log}
-              </div>
             </div>
-            <button
-              className="flex items-center justify-center hover:font-bold font-semibold text-red-600"
-              onClick={(e) => {
-                e.stopPropagation();
-                handleNotificationClose(note.id, user.userId);
-              }}
-            >
-              x
-            </button>
+            <div className="w-[48%] overflow-hidden whitespace-nowrap text-xs ml-2 font-medium text-gray-600 text-right">
+              {formatTime(note.post_date)}
+            </div>
           </div>
-        ))
-      ) : (
-        <div className="text-center justify-center text-gray-800 font-bold text-sm pt-[10%] pb-[10%] h-[80%]">
-          No Notifications
+          <div className="text-xs text-gray-700 font-normal truncate" title={note.log}>
+            #{note.tid} {note.log}
+          </div>
         </div>
-      )}
-    </div>
-
-    {/* Footer */}
-    <div className="flex text-xs font-bold text-box h-[10%] gap-2">
+        <button
+          className="flex items-center justify-center hover:font-bold font-semibold text-red-600"
+          onClick={() => handleNotificationClose(note.id, user.userId)}
+        >
+          x
+        </button>
+      </div>
+    ))
+  ) : (
+    <div className="text-center justify-center text-gray-800 font-bold text-sm pt-[40%] h-[80%]">No Notifications</div>
+  )}
+</div>
+<div className="flex text-xs font-bold text-box h-[10%] gap-2">
       <div
         className="text-center rounded p-2 w-[50%] bg-red-500 hover:bg-red-600 cursor-pointer"
         onClick={() => setIsNotificationsOpen(false)}
@@ -255,7 +239,9 @@ function Header() {
         Clear All
       </div>
     </div>
-  </div>
+</div>
+
+  
 )}
     </header>
   );
