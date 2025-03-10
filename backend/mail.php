@@ -26,69 +26,54 @@ if ($id && $value) {
         $placeholders = ['{firstname}', '{password}', '{username}'];
         $values = [$firstname, $password, $usernameD];
     } else if ($id == 2) {
-        $stmt = $conn->prepare("SELECT `tag`, `type`, `from_location`, `to_location`, `transfer_type`, `till_date`, `transfer_by`, `transfer_on` FROM transfer WHERE id = ?");
+        $stmt = $conn->prepare("SELECT `contact_number`, `customer_name`, `customer_location` FROM `ticket` WHERE id = ?");
+        $stmt->bind_param("i", $value); 
+        $stmt->execute();
+        $stmt->bind_result($wan, $cus_id, $cusl_id);
+        $stmt->fetch();
+        $stmt->close();
+
+        $stmt = $conn->prepare("SELECT `email` FROM `employee` WHERE `id` = ?");
+$stmt->bind_param("i", $emp_id);
+$stmt->execute();
+$stmt->bind_result($employee_email);
+$stmt->fetch();
+$stmt->close();
+
+$placeholders = [
+    '{tno}',
+    '{wan}',
+    '{mob}',
+    '{c1}',
+    '{c2}',
+    '{c3}',
+];
+
+$values = [
+    $value,
+    $wan, 
+    $mob,  
+    $customer,
+    $customer_region,
+    $employee_email, // Using email from employee table
+];
+
+        $stmt = $conn->prepare("SELECT `contact_mail` FROM `ticket` WHERE id = ?");
         $stmt->bind_param("i", $value);
+
         $stmt->execute();
-        $stmt->bind_result($tag, $type, $from, $to, $ttype, $till, $by, $at);
-        $stmt->fetch();
-        $stmt->close();
-
-        $stmt = $conn->prepare("SELECT `name` FROM branch WHERE id = ?");
-        $stmt->bind_param("i", $from);
-        $stmt->execute();
-        $stmt->bind_result($fromname);
-        $stmt->fetch();
-        $stmt->close();
-
-        $stmt = $conn->prepare("SELECT `name` FROM branch WHERE id = ?");
-        $stmt->bind_param("i", $to);
-        $stmt->execute();
-        $stmt->bind_result($toname);
-        $stmt->fetch();
-        $stmt->close();
-
-        if ($ttype == '1') {
-            $ttype = "Permanent";
-        } else if ($ttype == '2') {
-            $ttype = "Temporary";
-        }
-        if ($till == "0000-00-00") {
-            $till = "Permanent";
-        }
-
-        $placeholders = [
-            '{tag}',
-            '{type}',
-            '{from}',
-            '{to}',
-            '{ttype}',
-            '{till}',
-            '{by}',
-            '{at}'
-        ];
-
-        $values = [
-            $tag,
-            $type,
-            $fromname,
-            $toname,
-            $ttype,
-            $till,
-            $by,
-            $at
-        ];
-
-        // Fetch emails for the given branch and user types
-        $stmt = $conn->prepare("SELECT email FROM user WHERE branch = ? AND usertype IN ( 2, 3, 4, 5, 6, 7)");
-        $stmt->bind_param("i", $to);
-        $stmt->execute();
-        $stmt->bind_result($email);
+        $stmt->bind_result($emailString);
         $emails = [];
-        while ($stmt->fetch()) {
-            $emails[] = $email; // Collect all fetched emails
+        if ($stmt->fetch()) {
+          
+            $emails = explode(',', $emailString);
+           
+            $emails = array_map('trim', $emails);
         }
         $stmt->close();
     }
+   
+
 
     if (!empty($emails)) {
         $rq = mysqli_fetch_array(mysqli_query($conn, "SELECT * FROM smtp"));

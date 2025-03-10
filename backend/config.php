@@ -1,8 +1,21 @@
 <?php
 
-header('Access-Control-Allow-Origin: *');
-header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
-header('Access-Control-Allow-Headers: Content-Type, Authorization');
+header("Access-Control-Allow-Origin: *");
+header("Access-Control-Allow-Methods: GET, POST, PUT");
+header("Access-Control-Allow-Headers: Content-Type, Authorization");
+header("Access-Control-Allow-Credentials: true");
+header("X-Frame-Options: SAMEORIGIN");
+header("X-Content-Type-Options: nosniff");
+header("X-XSS-Protection: 1; mode=block");
+header("Strict-Transport-Security: max-age=31536000; includeSubDomains");
+header("Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline';");
+
+// Permissions-Policy Header
+header("Permissions-Policy: geolocation=(), midi=(), microphone=(), camera=(), magnetometer=(), gyroscope=(), fullscreen=(), payment=()");
+
+header("Referrer-Policy: no-referrer-when-downgrade");
+
+header("Content-Type: application/json");
 
 if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
     // If you have any specific headers you want to allow, set them here
@@ -11,7 +24,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
     exit(0);
 }
 
-header("Content-Type: application/json");
 function loadEnv($filePath)
 {
     if (!file_exists($filePath)) {
@@ -86,4 +98,5 @@ try {
 $ipaddress = getenv("REMOTE_ADDR") ?: $_SERVER['REMOTE_ADDR'];
 $hst = $_SERVER['HTTP_HOST'];
 $localIP = getHostByName(getHostName());
+$conn->set_charset("utf8");
 ?>

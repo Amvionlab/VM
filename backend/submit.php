@@ -85,6 +85,7 @@ try {
                 $fromStatus = '0';
                 $toStatus = '1';
                 $date = date('d-m-Y');
+                $emailResponse = sendmail(2, $tid);
                 $logStmt = $conn->prepare("INSERT INTO log (tid, done_by, from_status, to_status, date) VALUES (?, ?, ?, ?, ?)");
                 if ($logStmt === false) {
                     throw new Exception('Log prepare failed: ' . $conn->error);
