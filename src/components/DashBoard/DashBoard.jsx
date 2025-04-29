@@ -44,10 +44,13 @@ const App = () => {
   const navigate = useNavigate();
   const [tickets, setTickets] = useState([]);
   const [statusData, setStatusData] = useState([]);
+  const [selectedRCA, setSelectedRCA] = useState("");
+  const [rcaList, setRcaList] = useState([]);
   const [ticketTypes, setTicketTypes] = useState([]);
   const { user } = useContext(UserContext);
   const [isPopupOpen, setIsPopupOpen] = useState(false);
   const [ticketToMove, setTicketToMove] = useState(null);
+
   const [targetColumnId, setTargetColumnId] = useState(null);
   const [draggedItem, setDraggedItem] = useState(null); // Add draggedItem state
   const { setTicketId } = useTicketContext();
@@ -69,7 +72,19 @@ console.log(user)
       fetchTickets(initialTypeId);
     }
   }, [ticketTypes]);
-
+  useEffect(() => {
+    const fetchRcaData = async () => {
+      try {
+        const response = await fetch(`${baseURL}Backend/fetchRca.php`);
+        const data = await response.json();
+        setRcaList(data);
+      } catch (error) {
+        console.error("Error fetching RCA data:", error);
+      }
+    };
+    fetchRcaData();
+  }, []);
+  console.log(rcaList)
   const fetchTickets = async (value) => {
     try {
       let response;
@@ -377,16 +392,44 @@ console.log(user)
   </button>
 </div>
 
-      {user && user.ticketaction === "1" && (
-        <ConfirmationPopup
-          isOpen={isPopupOpen}
-          message={`Do you want to move to ${
-            columns.find((col) => col.id === targetColumnId)?.title
-          }?`}
-          onConfirm={handleConfirmMove}
-          onCancel={handleCancelMove}
-        />
-      )}
+{user && user.ticketaction === "1" && (
+  <ConfirmationPopup
+    isOpen={isPopupOpen}
+    message={
+      <>
+        {`Do you want to move to ${
+          columns.find((col) => col.id === targetColumnId)?.title
+        }?`}
+        {targetColumnId === "6" && (
+          <div className="mt-4">
+          <label
+            htmlFor="rca"
+            className="block mb-2 text-sm font-medium text-gray-700"
+          >
+            Select Root Cause (RCA)
+          </label>
+          <select
+            id="rca"
+            value={selectedRCA}
+            onChange={(e) => setSelectedRCA(e.target.value)}
+            className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-prime focus:border-prime transition duration-150 ease-in-out"
+          >
+            <option value="">-- Please Select RCA --</option>
+            {rcaList.map((rca, idx) => (
+              <option key={idx} value={rca.id}>
+                {rca.name}
+              </option>
+            ))}
+          </select>
+        </div>
+        
+        )}
+      </>
+    }
+    onConfirm={() => handleConfirmMove(selectedRCA)}  // pass selected RCA
+    onCancel={handleCancelMove}
+  />
+)}
     </div>
     </div>
   );

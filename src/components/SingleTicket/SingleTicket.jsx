@@ -16,7 +16,7 @@ import ReactPaginate from "react-paginate";
 import Select from "react-select";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faEdit, faTrashAlt,faCheckCircle, faTimesCircle } from '@fortawesome/free-solid-svg-icons';
-import { Table, TableHead, TableBody, TableRow, TableCell, TableContainer, IconButton, TextField, MenuItem, TablePagination, Paper,  InputBase } from '@mui/material';
+import { Table, TableHead, TableBody, TableRow, TableCell, TableContainer, IconButton, TextField, MenuItem, TablePagination, Paper, FormControl, InputLabel,  InputBase } from '@mui/material';
 
 
 import {
@@ -66,7 +66,8 @@ const SingleTicket = () => {
   const { user } = useContext(UserContext);
   const [open, setOpen] = useState(false);
   const [selectedStep, setSelectedStep] = useState(null);
-
+  const [selectedRCA, setSelectedRCA] = useState("");
+  const [rcaList, setRcaList] = useState([]);
   const [showTransferDialog, setShowTransferDialog] = useState(false);
   const [departments, setDepartments] = useState([]); // Initialize as an empty array
   const [selectedDepartment, setSelectedDepartment] = useState("");
@@ -139,6 +140,18 @@ const SingleTicket = () => {
     setPage(newPage);
   };
   
+useEffect(() => {
+    const fetchRcaData = async () => {
+      try {
+        const response = await fetch(`${baseURL}Backend/fetchRca.php`);
+        const data = await response.json();
+        setRcaList(data);
+      } catch (error) {
+        console.error("Error fetching RCA data:", error);
+      }
+    };
+    fetchRcaData();
+  }, []);
 
   const handleRowsPerPageChange = (event) => {
     setRowsPerPage(parseInt(event.target.value, 10));
@@ -1563,11 +1576,29 @@ console.log(user)
           {"Change Ticket Status"}
         </DialogTitle>
         <DialogContent>
-          <DialogContentText id="alert-dialog-description">
-            Are you sure you want to change the ticket status to{" "}
-            {status[selectedStep]?.subName}?
-          </DialogContentText>
-        </DialogContent>
+  <DialogContentText id="alert-dialog-description">
+    Are you sure you want to change the ticket status to{" "}
+    {status[selectedStep]?.subName}?
+  </DialogContentText>
+
+  {status[selectedStep]?.subName === "Closed" && (
+    <select
+      id="rca"
+      value={selectedRCA}
+      onChange={(e) => setSelectedRCA(e.target.value)}
+      className="w-full px-3 py-2 mt-2 text-sm border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-prime focus:border-prime transition duration-150 ease-in-out"
+    >
+      <option value="">-- Please Select RCA --</option>
+      {rcaList.map((rca, idx) => (
+        <option key={idx} value={rca.id}>
+          {rca.name}
+        </option>
+      ))}
+    </select>
+  )}
+</DialogContent>
+
+        
         <DialogActions>
           <Button onClick={() => setOpen(false)}>Cancel</Button>
           <Button onClick={handleConfirm} autoFocus>
