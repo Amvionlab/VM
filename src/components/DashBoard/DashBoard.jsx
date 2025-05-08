@@ -5,6 +5,8 @@ import { backendPort, baseURL } from "../../config.js";
 import { encryptURL } from "../../urlEncrypt";
 import { UserContext } from "../UserContext/UserContext";
 import { useTicketContext } from "../UserContext/TicketContext";
+import { toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 import {
   Dialog,
   DialogActions,
@@ -44,10 +46,16 @@ const App = () => {
   const navigate = useNavigate();
   const [tickets, setTickets] = useState([]);
   const [statusData, setStatusData] = useState([]);
+  const [rcaList, setRcaList] = useState([]);
   const [ticketTypes, setTicketTypes] = useState([]);
   const { user } = useContext(UserContext);
   const [isPopupOpen, setIsPopupOpen] = useState(false);
   const [ticketToMove, setTicketToMove] = useState(null);
+  const [selectedRCA, setSelectedRCA] = useState("");
+  const [selectedSubCategory, setSelectedSubCategory] = useState("");
+  const [rcaSubList, setRcaSubList] = useState([]);
+
+
   const [targetColumnId, setTargetColumnId] = useState(null);
   const [draggedItem, setDraggedItem] = useState(null); // Add draggedItem state
   const { setTicketId } = useTicketContext();
@@ -69,7 +77,26 @@ console.log(user)
       fetchTickets(initialTypeId);
     }
   }, [ticketTypes]);
-
+  useEffect(() => {
+    const fetchRcaData = async () => {
+      try {
+        const response = await fetch(`${baseURL}Backend/fetchRca.php`);
+        const data = await response.json();
+        
+        if (data && Array.isArray(data.rca) && Array.isArray(data.rca_sub)) {
+          setRcaList(data.rca);      // only the rca array
+          setRcaSubList(data.rca_sub); // only the rca_sub array
+        } else {
+          console.error("Invalid data format from fetchRca.php", data);
+        }
+      } catch (error) {
+        console.error("Error fetching RCA data:", error);
+      }
+    };
+  
+    fetchRcaData();
+  }, []);  
+  console.log(rcaList)
   const fetchTickets = async (value) => {
     try {
       let response;
@@ -377,16 +404,78 @@ console.log(user)
   </button>
 </div>
 
-      {user && user.ticketaction === "1" && (
-        <ConfirmationPopup
-          isOpen={isPopupOpen}
-          message={`Do you want to move to ${
-            columns.find((col) => col.id === targetColumnId)?.title
-          }?`}
-          onConfirm={handleConfirmMove}
-          onCancel={handleCancelMove}
-        />
-      )}
+{user && user.ticketaction === "1" && (
+  <ConfirmationPopup
+    isOpen={isPopupOpen}
+    message={
+      <>
+        {`Do you want to move to ${
+          columns.find((col) => col.id === targetColumnId)?.title
+        }?`}
+
+        {targetColumnId === "6" && (
+          <div className="mt-4">
+            {/* RCA Dropdown */}
+            <label
+              htmlFor="rca"
+              className="block mb-2 text-sm font-medium text-gray-700"
+            >
+              Select Root Cause (RCA)
+            </label>
+            <select
+              id="rca"
+              value={selectedRCA}
+              onChange={(e) => {
+                setSelectedRCA(e.target.value);
+                setSelectedSubCategory(""); // Reset sub-category
+              }}
+              className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-prime focus:border-prime transition duration-150 ease-in-out"
+            >
+              <option value="">-- Please Select RCA --</option>
+              {rcaList.map((rca) => (
+                <option key={rca.id} value={rca.id}>
+                  {rca.name}
+                </option>
+              ))}
+            </select>
+
+            {/* Sub-category Dropdown */}
+            {selectedRCA && (
+              <div className="mt-4">
+                <label
+                  htmlFor="rca-sub"
+                  className="block mb-2 text-sm font-medium text-gray-700"
+                >
+                  Select Sub-Category
+                </label>
+                <select
+                  id="rca-sub"
+                  value={selectedSubCategory}
+                  onChange={(e) => setSelectedSubCategory(e.target.value)}
+                  className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-prime focus:border-prime transition duration-150 ease-in-out"
+                >
+                  <option value="">-- Please Select Sub-Category --</option>
+                  {rcaSubList
+                    .filter((sub) => sub.rca_id === selectedRCA)
+                    .map((sub) => (
+                      <option key={sub.id} value={sub.id}>
+                        {sub.name}
+                      </option>
+                    ))}
+                </select>
+              </div>
+            )}
+          </div>
+        )}
+      </>
+    }
+    onConfirm={() => {
+      handleConfirmMove(selectedRCA, selectedSubCategory);
+      toast.success("Status Updated successfully!");
+    }} // Pass both values
+    onCancel={handleCancelMove}
+  />
+)}
     </div>
     </div>
   );

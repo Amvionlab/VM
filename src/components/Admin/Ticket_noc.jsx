@@ -17,7 +17,8 @@ import { UserContext } from "../UserContext/UserContext.jsx";
 
 const Form = () => {
   const [formData, setFormData] = useState({
-    domain: "",
+    name: "",
+    type_id: "",
   });
   const { user } = useContext(UserContext);
   console.log("DashBoard context value:", user);
@@ -25,7 +26,7 @@ const Form = () => {
   const [users, setUsers] = useState([]);
   const [filteredUsers, setFilteredUsers] = useState([]);
   const [attachment, setAttachment] = useState(null);
-  const [ticketsPerPage, setTicketsPerPage] = useState(10); // default to 10 rows per page
+  const [ticketsPerPage, setTicketsPerPage] = useState(10);
   const [currentPage, setCurrentPage] = useState(0);
   const [submissionStatus, setSubmissionStatus] = useState(null);
   const [attachmentError, setAttachmentError] = useState("");
@@ -35,6 +36,7 @@ const Form = () => {
     name: false,
   });
   const [showForm, setShowForm] = useState(false);
+  const [categories, setCategories] = useState([]);
 
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
@@ -51,7 +53,18 @@ const Form = () => {
       }
     };
 
+    const fetchCategories = async () => {
+      try {
+        const response = await fetch(`${baseURL}/backend/fetchTicket_type.php`);
+        const data = await response.json();
+        setCategories(data);
+      } catch (error) {
+        console.error("Error fetching categories:", error);
+      }
+    };
+
     fetchData();
+    fetchCategories();
   }, []);
 
   const navigate = useNavigate();
@@ -88,7 +101,7 @@ const Form = () => {
     if (attachment) {
       form.append("attachment", attachment);
     }
-
+  
     try {
       const response = await fetch(`${baseURL}/backend/ticket_noc_add.php`, {
         method: "POST",
@@ -100,13 +113,33 @@ const Form = () => {
       }
       setSubmissionStatus({ success: true, message: result.message });
       toast.success("Ticket Sub Category added");
-      window.location.reload();
+  
+      // Refresh table data
+      const fetchData = async () => {
+        try {
+          const response = await fetch(`${baseURL}/backend/fetchTicket_noc.php`);
+          const data = await response.json();
+          setUsers(data);
+          setFilteredUsers(data);
+        } catch (error) {
+          console.error("Error fetching data:", error);
+        }
+      };
+      fetchData();
+  
+      // Clear form inputs
+      setFormData({
+        name: "",
+        type_id: "",
+      });
+      setAttachment(null);
+      setSubmissionStatus(null);
     } catch (error) {
       setSubmissionStatus({
         success: false,
-        message:
-          "There was a problem with your fetch operation: " + error.message,
+        message: "There was a problem with your fetch operation: " + error.message,
       });
+      toast.error("Failed to add Ticket Sub Category: " + error.message);
     }
   };
 
@@ -146,8 +179,10 @@ const Form = () => {
 
   const exportCSV = () => {
     const csvContent = [
-      columns.map(col => col.label).join(","),
-      ...filteredUsers.map(row => columns.map(col => row[col.id]).join(","))
+      columns.map((col) => col.label).join(","),
+      ...filteredUsers.map((row) =>
+        columns.map((col) => row[col.id]).join(",")
+      ),
     ].join("\n");
 
     const blob = new Blob([csvContent], { type: "text/csv" });
@@ -161,7 +196,10 @@ const Form = () => {
     const data = filteredUsers.map((row) =>
       columns.map((column) => row[column.id] || "")
     );
-    const worksheet = XLSX.utils.json_to_sheet([columns.map((c) => c.label), ...data]);
+    const worksheet = XLSX.utils.json_to_sheet([
+      columns.map((c) => c.label),
+      ...data,
+    ]);
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, "Sheet1");
     XLSX.writeFile(workbook, "Ticket_noc.xlsx");
@@ -184,6 +222,7 @@ const Form = () => {
   const columns = [
     { id: "id", label: "ID", minWidth: 100 },
     { id: "name", label: "Name", minWidth: 170 },
+    { id: "type_id", label: "Category ID", minWidth: 100 },
   ];
 
   const handleChangePage = (event, newPage) => {
@@ -198,40 +237,56 @@ const Form = () => {
   return (
     <div className="bg-second max-h-5/6 w-full relative text-xs mx-auto p-1 lg:overflow-y-hidden h-auto ticket-scroll">
       {showForm && (
-        <div className="w-full relative mb-1 bg-box p-3 rounded-lg font-mont">
-          <div className="ticket-table mt-2">
-            <form onSubmit={handleSubmit} className="space-y-4 text-label">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-10 ml-10 pr-10 mb-0">
-                <div className="text-lg font-bold text-prime mb-2 font-mont">
-                  Ticket Sub Category Details:
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-10 ml-10 pr-10 mb-0">
-                <div className="flex items-center mb-2 mr-4">
-                  <label className="text-sm font-semibold text-prime mr-2 w-32">
-                    Name
-                  </label>
-                  <input
-                    type="text"
-                    name="name"
-                    placeholder="Enter Ticket Sub Category Name"
-                    value={formData.name}
-                    onChange={handleChange}
-                    required
-                    className="flex-grow text-xs bg-box border w-80 border-gray-400 p-2 outline-none transition ease-in-out delay-150"
-                  />
-                  <button
-                    type="submit"
-                    className="hover:bg-prime border-2 border-prime ml-4 font-sui font-bold text-xs text-prime hover:text-white py-1 px-3 rounded-md shadow focus:outline-none"
-                  >
-                    Submit
-                  </button>
-                </div>
-              </div>
-            </form>
+        <div className="w-full relative bg-box p-3 rounded-lg font-mont">
+        <form onSubmit={handleSubmit} className="space-y-4 text-label">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-10 ml-10 pr-10 mb-0">
+            <div className="text-lg font-bold text-prime mb-2">
+              Ticket Sub Category Details:
+            </div>
           </div>
-        </div>
+          <div className="grid grid-cols-2 md:grid-cols-2 gap-x-10 ml-10 pr-10 mb-0">
+            <div className="flex items-center mb-2 mr-4">
+              <label className="text-sm font-semibold text-prime mr-2 w-32">
+                Name
+              </label>
+              <input
+                type="text"
+                name="name"
+                value={formData.name}
+                onChange={handleChange}
+                required
+                placeholder="Enter Ticket Sub Category Name"
+                className="flex-grow text-xs bg-box border w-80 border-gray-400 p-2 outline-none transition ease-in-out delay-150"
+              />
+            </div>
+            <div className="flex items-center mb-4 mr-4">
+              <label className="text-sm font-semibold text-prime mr-2 w-32">
+                Category
+              </label>
+              <select
+                name="type_id"
+                value={formData.type_id}
+                onChange={handleChange}
+                required
+                className="selectbox flex-grow text-xs bg-box border p-2 mt-1 outline-none focus:border-bgGray focus:ring-bgGray"
+              >
+                <option value="">Select Category</option>
+                {categories.map((category) => (
+                  <option key={category.id} value={category.id}>
+                    {category.type}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+          <button
+            type="submit"
+            className="hover:bg-prime border-2 border-prime ml-8 font-sui font-bold text-xs text-prime hover:text-white py-1 px-3 rounded-md shadow focus:outline-none"
+          >
+            Submit
+          </button>
+        </form>
+      </div>
       )}
 
       <div className="w-full relative bg-box p-3 rounded-lg font-mont">
@@ -251,18 +306,18 @@ const Form = () => {
               </span>
             </div>
             <span>
-            <TablePagination
-  rowsPerPageOptions={[5, 10, 25]} // Options for rows per page
-  component="div"
-  count={filteredUsers.length} // Total number of rows
-  rowsPerPage={ticketsPerPage} // Current rows per page
-  page={currentPage} // Current page index
-  onPageChange={(event, newPage) => setCurrentPage(newPage)} // Change page
-  onRowsPerPageChange={(event) => {
-    setTicketsPerPage(parseInt(event.target.value, 10)); // Update rows per page
-    setCurrentPage(0); // Reset to first page
-  }}
-/>  
+              <TablePagination
+                rowsPerPageOptions={[5, 10, 25]}
+                component="div"
+                count={filteredUsers.length}
+                rowsPerPage={ticketsPerPage}
+                page={currentPage}
+                onPageChange={(event, newPage) => setCurrentPage(newPage)}
+                onRowsPerPageChange={(event) => {
+                  setTicketsPerPage(parseInt(event.target.value, 10));
+                  setCurrentPage(0);
+                }}
+              />
             </span>
             <span className="flex gap-6">
               <button
@@ -308,13 +363,25 @@ const Form = () => {
               </TableHead>
               <TableBody>
                 {filteredUsers
-                  .slice(currentPage * ticketsPerPage, currentPage * ticketsPerPage + ticketsPerPage)
+                  .slice(
+                    currentPage * ticketsPerPage,
+                    currentPage * ticketsPerPage + ticketsPerPage
+                  )
                   .map((ticket) => (
-                    <TableRow hover role="checkbox" tabIndex={-1} key={ticket.id}>
+                    <TableRow
+                      hover
+                      role="checkbox"
+                      tabIndex={-1}
+                      key={ticket.id}
+                    >
                       {columns.map((column) => {
                         const value = ticket[column.id];
                         return (
-                          <TableCell key={column.id} align="center" sx={{ padding: "6px" }}>
+                          <TableCell
+                            key={column.id}
+                            align="center"
+                            sx={{ padding: "6px" }}
+                          >
                             {value}
                           </TableCell>
                         );

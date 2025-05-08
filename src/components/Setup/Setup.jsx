@@ -32,8 +32,8 @@ function Setup() {
       { title: "SLA", icon: <FontAwesomeIcon icon={faFlag} />, path: "/admin/sla" },
     ],
     TICKET: [
-      { title: "Ticket Catagory", icon: <FontAwesomeIcon icon={faTags} />, path: "/admin/ticket_type" },
-      { title: "Ticket Sub Catagory", icon: <FontAwesomeIcon icon={faTicketAlt} />, path: "/admin/ticket_noc" },
+      { title: "Ticket Category", icon: <FontAwesomeIcon icon={faTags} />, path: "/admin/ticket_type" },
+      { title: "Ticket Sub Category", icon: <FontAwesomeIcon icon={faTicketAlt} />, path: "/admin/ticket_noc" },
       { title: "Ticket Status", icon: <FontAwesomeIcon icon={faTicketAlt} />, path: "/admin/ticket_status" },
       { title: "Ticket Issue Type", icon: <FontAwesomeIcon icon={faHandsHelping} />, path: "/admin/ticket_service" },
     ]

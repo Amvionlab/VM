@@ -1,7 +1,6 @@
 <?php
 include 'config.php';
 
-    
 // Process form submission
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $uploadDir = 'D:/xampp/htdocs/TMS/src/photo/';
@@ -9,7 +8,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
     if (isset($_FILES['attachment']) && $_FILES['attachment']['error'] == UPLOAD_ERR_OK) {
         $fileTmpPath = $_FILES['attachment']['tmp_name'];
-        $fileName = basename($_FILES['attachment']['name']); // Ensure file name is safe
+        $fileName = basename($_FILES['attachment']['name']);
         $fileExtension = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
         $allowedExtensions = array('pdf', 'jpg', 'jpeg', 'png');
 
@@ -18,7 +17,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
             // Move the file to the specified directory
             if (move_uploaded_file($fileTmpPath, $filePath)) {
-                $attachmentPath = 'src/photo/' . $fileName; // Storing relative path
+                $attachmentPath = 'src/photo/' . $fileName;
             } else {
                 throw new Exception('File upload failed.');
             }
@@ -27,12 +26,16 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         }
     }
 
-    $domainname = $_POST['name'];
-    $active="1";
+    $name = $_POST['name'];
+    $type_id = $_POST['type_id'];
+    $active = "1";
 
+    // Sanitize inputs to prevent SQL injection
+    $name = $conn->real_escape_string($name);
+    $type_id = $conn->real_escape_string($type_id);
 
-    // Insert user data into 'users' table
-    $sql = "INSERT INTO ticket_noc (name ,is_active) VALUES ('$domainname', '1')"; 
+    // Insert user data into 'ticket_noc' table
+    $sql = "INSERT INTO ticket_noc (name, type_id, is_active) VALUES ('$name', '$type_id', '$active')";
 
     if ($conn->query($sql) === TRUE) {
         $response = array('success' => true, 'message' => 'Ticket NOC added successfully.');
@@ -47,3 +50,4 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 }
 
 $conn->close();
+?>

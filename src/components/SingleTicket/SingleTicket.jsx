@@ -11,12 +11,13 @@ import * as XLSX from "xlsx";
 import { tooltipClasses } from '@mui/material/Tooltip';
 import jsPDF from "jspdf";
 import { styled } from '@mui/material/styles';
+import { Repeat } from 'lucide-react';
 import html2canvas from "html2canvas";
 import ReactPaginate from "react-paginate";
 import Select from "react-select";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faEdit, faTrashAlt,faCheckCircle, faTimesCircle } from '@fortawesome/free-solid-svg-icons';
-import { Table, TableHead, TableBody, TableRow, TableCell, TableContainer, IconButton, TextField, MenuItem, TablePagination, Paper,  InputBase } from '@mui/material';
+import { Table, TableHead, TableBody, TableRow, TableCell, TableContainer, IconButton, TextField, MenuItem, TablePagination, Paper, FormControl, InputLabel,  InputBase } from '@mui/material';
 
 
 import {
@@ -66,10 +67,13 @@ const SingleTicket = () => {
   const { user } = useContext(UserContext);
   const [open, setOpen] = useState(false);
   const [selectedStep, setSelectedStep] = useState(null);
-
   const [showTransferDialog, setShowTransferDialog] = useState(false);
   const [departments, setDepartments] = useState([]); // Initialize as an empty array
   const [selectedDepartment, setSelectedDepartment] = useState("");
+  const [rcaList, setRcaList] = useState([]);
+  const [rcaSubList, setRcaSubList] = useState([]);
+  const [selectedRCA, setSelectedRCA] = useState("");
+  const [selectedSubRCA, setSelectedSubRCA] = useState("");
 
   const [users, setUsers] = useState([]);
   const [filteredUsers, setFilteredUsers] = useState([]);
@@ -139,6 +143,26 @@ const SingleTicket = () => {
     setPage(newPage);
   };
   
+  useEffect(() => {
+    const fetchRcaData = async () => {
+      try {
+        const response = await fetch(`${baseURL}Backend/fetchRca.php`);
+        const data = await response.json();
+        if (data && Array.isArray(data.rca) && Array.isArray(data.rca_sub)) {
+          setRcaList(data.rca);
+          setRcaSubList(data.rca_sub);
+        } else {
+          console.error("Invalid data format", data);
+        }
+      } catch (error) {
+        console.error("Error fetching RCA data:", error);
+      }
+    };
+
+    fetchRcaData();
+  }, []);
+
+  const filteredSubRCA = rcaSubList.filter(sub => sub.rca_id === selectedRCA);
 
   const handleRowsPerPageChange = (event) => {
     setRowsPerPage(parseInt(event.target.value, 10));
@@ -1086,16 +1110,13 @@ console.log(user)
   </div>
   {/* Transfer Icon */}
   {user && user.assign === "1"  ? (
-  <button
+  
+<button
   className="absolute top-0 right-0 mt-3 mr-3 bg-transparent text-blue-500 hover:text-blue-600 transition focus:outline-none"
   onClick={() => setShowTransferDialog(true)}
   title="Transfer Ticket"
 >
-  <img
-    src="/src/image/transfer_icon.png"
-    alt="Transfer Icon"
-    className="w-6 h-6"
-  />
+  <Repeat className="w-6 h-6" />
 </button>
   ):<></>}
 
@@ -1567,7 +1588,47 @@ console.log(user)
             Are you sure you want to change the ticket status to{" "}
             {status[selectedStep]?.subName}?
           </DialogContentText>
+
+          {status[selectedStep]?.subName === "Closed" && (
+            <>
+              {/* First Dropdown: RCA */}
+              <select
+                id="rca"
+                value={selectedRCA}
+                onChange={(e) => {
+                  setSelectedRCA(e.target.value);
+                  setSelectedSubRCA(""); // reset subcategory when main RCA changes
+                }}
+                className="w-full px-3 py-2 mt-2 text-sm border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-prime focus:border-prime transition duration-150 ease-in-out"
+              >
+                <option value="">-- Please Select RCA --</option>
+                {rcaList.map((rca, idx) => (
+                  <option key={idx} value={rca.id}>
+                    {rca.name}
+                  </option>
+                ))}
+              </select>
+
+              {/* Second Dropdown: Sub RCA (shows only if RCA selected) */}
+              {selectedRCA && (
+                <select
+                  id="subRca"
+                  value={selectedSubRCA}
+                  onChange={(e) => setSelectedSubRCA(e.target.value)}
+                  className="w-full px-3 py-2 mt-4 text-sm border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-prime focus:border-prime transition duration-150 ease-in-out"
+                >
+                  <option value="">-- Please Select Sub-Category --</option>
+                  {filteredSubRCA.map((sub, idx) => (
+                    <option key={idx} value={sub.id}>
+                      {sub.name}
+                    </option>
+                  ))}
+                </select>
+              )}
+            </>
+          )}
         </DialogContent>
+
         <DialogActions>
           <Button onClick={() => setOpen(false)}>Cancel</Button>
           <Button onClick={handleConfirm} autoFocus>
